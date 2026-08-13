@@ -112,11 +112,12 @@ let rec shift_n (ps : t) num =
       shift ps; loop (num-1) end
     else () in loop num;;
 
-let end_err (ps : t) (endtok : Tokens.t) (ast : ast) =
+let check_end (ps : t) (endtok : Tokens.t) (ast : ast) =
   match ps.toks with
   | [] -> Fatal "No tokens to parse" |> raise
   | (ftok, p) :: _ -> if endtok = ftok then
-                      let _ = shift ps in ast else
+                      let _ = shift ps in ast 
+                      else
                         Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
 
 let parse_expr (ps : t) (endtok : Tokens.t) : expr =
@@ -132,37 +133,38 @@ let parse_expr (ps : t) (endtok : Tokens.t) : expr =
   | [] -> Fatal "No tokens to parse" |> raise
   | num :: _ -> shift ps; match_num num |> parse_binop;;
 
-let rec parse_nested_cf (ps : t) (endtok : Tokens.t) : ast =
+let rec parse_nested (ps : t) : ast =
   match ps.toks with
-  | (LBRACE, _) :: _ -> shift ps; let cf = parse ps RBRACE in end_err ps endtok cf
+  | (LBRACE, _) :: _ -> shift ps; let cf = parse ps RBRACE in cf
   | _ -> Fatal "Error in Nested Cf" |> raise
 
-and parse_def (ps : t) (endtok : Tokens.t) : ast =
+and parse_def (ps : t) : ast =
   match ps.toks with
   | (DEF, _) :: (VAR str, _) :: (EQ, _) :: _ -> shift_n ps 3;
                                                 let expr = parse_expr ps SEMICOLON in
-                                                let ast = Def (str, expr) in end_err ps endtok ast
+                                                let ast = Def (str, expr) in ast
   | _ -> Fatal "Issues" |> raise
 
-and parse_if (ps : t) (endtok : Tokens.t) : ast =
+and parse_if (ps : t) : ast =
   shift ps; let cond = parse_expr ps THEN in
-    let nested_ast = parse_nested_cf ps SEMICOLON in
-      let ast = If (cond, nested_ast) in end_err ps endtok ast
+    let nested_ast = parse_nested ps in
+      let ast = If (cond, nested_ast) in ast
 
-and parse_elif (ps : t) (endtok : Tokens.t) : ast =
+and parse_elif (ps : t) : ast =
   shift ps; let cond = parse_expr ps THEN in
-    let ast1 = parse_nested_cf ps ELSE in
-      let ast2 = parse_nested_cf ps SEMICOLON in
-        let ast = Elif (cond, ast1, ast2) in end_err ps endtok ast
+    let ast1 = parse_nested ps in
+      let ast2 = parse_nested ps in
+        let ast = Elif (cond, ast1, ast2) in ast
 
-and parse_ret (ps : t) (endtok : Tokens.t) : ast =
-  shift ps; let ast = Ret (parse_expr ps SEMICOLON) in end_err ps endtok ast
+and parse_ret (ps : t) : ast =
+  shift ps; let ast = Ret (parse_expr ps SEMICOLON) in ast
 
 and parse (ps : t) (endtok : Tokens.t) : ast =
-  match ps.toks with
-  | (DEF, _) :: _ -> parse_def ps endtok
-  | (IF, _) :: _ -> parse_if ps endtok
-  | (ELIF, _) :: _ -> parse_elif ps endtok
-  | (RETURN, _) :: _ -> parse_ret ps endtok
+  let ast = match ps.toks with
+  | (DEF, _) :: _ -> parse_def ps
+  | (IF, _) :: _ -> parse_if ps
+  | (ELIF, _) :: _ -> parse_elif ps
+  | (RETURN, _) :: _ -> parse_ret ps
   | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
-  | [] -> Fatal "Nothing here! Contact maintainers!" |> raise
+  | [] -> Fatal "Nothing here! Contact maintainers!" |> raise in
+  check_end ps endtok ast

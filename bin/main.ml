@@ -18,6 +18,5 @@ let () =
     let _ = read str Empty in () 
   else
     (*Else give a repl*)
-    let _ = print_int (Array.length Sys.argv) in
   repl Empty
 ;;
