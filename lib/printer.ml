@@ -25,13 +25,18 @@ let rec fmap (map : expr_map) : string =
 let rec fdef ((name, expr) : def) = 
   sprintf "Def %s = %s" name (fexpr expr)
 
-let rec fast ast = 
-  match ast with 
+let rec fterm term = 
+  match term with 
   | Def d -> fdef d
-  | Elif (cond, ast1, ast2) -> sprintf "If %s then %s else %s" (fexpr cond) (fast ast1) (fast ast2)
-  | If (cond, ast) -> sprintf "If %s then %s" (fexpr cond) (fast ast)
+  | Elif (cond, term1, term2) -> sprintf "If %s then %s else %s" (fexpr cond) (fterm term1) (fterm term2)
+  | If (cond, term) -> sprintf "If %s then %s" (fexpr cond) (fterm term)
   | Ret expr -> fexpr expr |> sprintf "Return %s"
   | Nop -> "Nop"
+
+let rec fast ast = 
+  match ast with
+  | hd :: ls -> sprintf "%s; %s" (fterm hd) (fast ls)
+  | [] -> ""
 
 let print (func : 'a -> string) (obj : 'a) =
   let str = func obj in

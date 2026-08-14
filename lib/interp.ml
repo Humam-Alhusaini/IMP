@@ -18,30 +18,37 @@ let rec simplify_expr (ctx : expr_map) (expr : expr) : int =
   | Num y -> y
   | Var str -> simplify_expr ctx (find str ctx);;
 
-let rec simplify_ast (ctx : expr_map) (ast : ast) : ast  =
-  match ast with
-  | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else Nop
-  | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
+let rec simplify_term (ctx : expr_map) (term : term) : term  =
+  match term with
+  | If (expr, term1) -> if (simplify_expr ctx expr) > 0 then (simplify_term ctx term1) else Nop
+  | Elif (expr, term1, term2) -> if (simplify_expr ctx expr) > 0 then (simplify_term ctx term1) else (simplify_term ctx term2)
   | Def (str, expr) -> Def (str, Num (simplify_expr ctx expr))
   | Ret expr -> Ret (Num (simplify_expr ctx expr)) 
   | Nop -> Nop
 
-let rec do_stuff (ctx : expr_map) (ast : ast) : expr_map  =
-  match ast with
-  | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (do_stuff ctx ast1) else ctx
-  | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (do_stuff ctx ast1) else (do_stuff ctx ast2)
+let rec interp_term (ctx : expr_map) (term : term) : expr_map  =
+  match term with
+  | If (expr, term1) -> if (simplify_expr ctx expr) > 0 then (interp_term ctx term1) else ctx
+  | Elif (expr, term1, term2) -> if (simplify_expr ctx expr) > 0 then (interp_term ctx term1) else (interp_term ctx term2)
   | Ret expr -> Num (simplify_expr ctx expr) |> print fexpr; ctx 
   | Nop -> ctx
   | Def (str, expr) -> let newexpr = Num (simplify_expr ctx expr) in
-                       add str newexpr ctx
+                        add str newexpr ctx
+
+and interp_ast (ctx : expr_map) (ast : ast) : expr_map =
+  match ast with
+  | [] -> let _ = print_string "ended" in ctx
+  | hd :: ls -> let newctx = interp_term ctx hd in
+                interp_ast newctx ls;;
 
 let read str (ctx : expr_map) : expr_map =
   try
     let lex = Lexer.create str in
       let tokens = Lexer.tokenize lex [] in
         let ps = Parser.create tokens in
-          let ast = Parser.parse ps EOF in
-            let newctx = do_stuff ctx ast in newctx
+          let ast = Parser.parse ps [] in
+          let _ =  print fast ast in
+            let newctx = interp_ast ctx ast in newctx
   with 
   | Lexing_error (err, toks, pos) -> 
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;

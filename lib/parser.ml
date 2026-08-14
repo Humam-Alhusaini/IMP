@@ -72,12 +72,14 @@ and op =
 
 and def = string * expr
 
-and ast =
+and term =
 | Def of def
-| Elif of expr * ast * ast
-| If of expr * ast
+| Elif of expr * term * term
+| If of expr * term
 | Ret of expr
 | Nop
+
+and ast = term list;;
 
 let match_num n =
   match n with
@@ -112,11 +114,11 @@ let rec shift_n (ps : t) num =
       shift ps; loop (num-1) end
     else () in loop num;;
 
-let check_end (ps : t) (endtok : Tokens.t) (ast : ast) =
+let check_end (ps : t) (endtok : Tokens.t) (term : term) =
   match ps.toks with
   | [] -> Fatal "No tokens to parse" |> raise
   | (ftok, p) :: _ -> if endtok = ftok then
-                      let _ = shift ps in ast 
+                      let _ = shift ps in term 
                       else
                         Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
 
@@ -133,41 +135,52 @@ let parse_expr (ps : t) (endtok : Tokens.t) : expr =
   | [] -> Fatal "No tokens to parse" |> raise
   | num :: _ -> shift ps; match_num num |> parse_binop;;
 
-let rec parse_nested (ps : t) : ast =
+let rec parse_nested (ps : t) : term =
   match ps.toks with
-  | (LBRACE, _) :: _ -> shift ps; let cf = parse ps RBRACE in cf
+  | (LBRACE, _) :: _ -> shift ps; let cf = parse_term ps RBRACE in cf
   | hd :: _ -> Parsing_error("Expected { for nested", hd) |> raise
   | [] -> Fatal "Major Error in Nested CF Parsing" |> raise
 
-and parse_def (ps : t) : ast =
+and parse_def (ps : t) : term =
   match ps.toks with
   | (DEF, _) :: (VAR str, _) :: (EQ, _) :: _ -> shift_n ps 3;
-                                                let expr = parse_expr ps SEMICOLON in
-                                                let ast = Def (str, expr) in ast
+    let expr = parse_expr ps SEMICOLON in
+                                                let term = Def (str, expr) in term
   | (DEF, _) :: (VAR str, _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
   | (DEF, _) :: tok :: _ -> Parsing_error ("Missing var", tok) |> raise
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
-and parse_if (ps : t) : ast =
+and parse_if (ps : t) : term =
   shift ps; let cond = parse_expr ps THEN in
-    let nested_ast = parse_nested ps in
-      let ast = If (cond, nested_ast) in ast
+    let nested_term = parse_nested ps in
+      let term = If (cond, nested_term) in term
 
-and parse_elif (ps : t) : ast =
+and parse_elif (ps : t) : term =
   shift ps; let cond = parse_expr ps THEN in
-    let ast1 = parse_nested ps in
-      let ast2 = parse_nested ps in
-        let ast = Elif (cond, ast1, ast2) in ast
+    let term1 = parse_nested ps in
+      let term2 = parse_nested ps in
+        let term = Elif (cond, term1, term2) in term
 
-and parse_ret (ps : t) : ast =
-  shift ps; let ast = Ret (parse_expr ps SEMICOLON) in ast
+and parse_ret (ps : t) : term =
+  shift ps; let term = Ret (parse_expr ps SEMICOLON) in term
 
-and parse (ps : t) (endtok : Tokens.t) : ast =
-  let ast = match ps.toks with
+and parse_term (ps : t) (endtok : Tokens.t) : term =
+  let term = match ps.toks with
   | (DEF, _) :: _ -> parse_def ps
   | (IF, _) :: _ -> parse_if ps
   | (ELIF, _) :: _ -> parse_elif ps
   | (RETURN, _) :: _ -> parse_ret ps
   | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
   | [] -> Fatal "Nothing here! Contact maintainers!" |> raise in
-  check_end ps endtok ast
+    match ps.toks with
+    | [] -> Fatal "No tokens to parse" |> raise
+    | (ftok, p) :: _ -> if endtok = ftok then
+                      let _ = shift ps in term 
+                      else
+                        Parsing_error ("You used Wrong token to end the statement", (ftok, p)) |> raise;;
+
+let rec parse (ps : t) (ast : ast) : ast =
+    match ps.toks with
+    | [(EOF, _)] -> ast
+    | hd :: _ -> parse ps (ast @ [parse_term ps SEMICOLON]) 
+    | [] -> Fatal "Didn't encounter EOF token, probably a lexer issue" |> raise
