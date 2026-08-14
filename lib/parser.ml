@@ -125,7 +125,7 @@ let parse_expr (ps : t) (endtok : Tokens.t) : expr =
   let rec parse_binop (curr : expr) : expr =
     match ps.toks with
     | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: _ -> shift_n ps 2; Binop(match_op (op, p), curr, match_num num) |> parse_binop
-    | [] -> Fatal "Can't find end token" |> raise
+    | [] -> Fatal "Token ended before finding end token" |> raise
     | (ftok, pos) :: _ -> (if ftok = endtok then let _ = shift ps in curr else
                     Parsing_error ("Expected expression to either end or continue", (ftok, pos)) |> raise) in
 
@@ -136,14 +136,17 @@ let parse_expr (ps : t) (endtok : Tokens.t) : expr =
 let rec parse_nested (ps : t) : ast =
   match ps.toks with
   | (LBRACE, _) :: _ -> shift ps; let cf = parse ps RBRACE in cf
-  | _ -> Fatal "Error in Nested Cf" |> raise
+  | hd :: _ -> Parsing_error("Expected { for nested", hd) |> raise
+  | [] -> Fatal "Major Error in Nested CF Parsing" |> raise
 
 and parse_def (ps : t) : ast =
   match ps.toks with
   | (DEF, _) :: (VAR str, _) :: (EQ, _) :: _ -> shift_n ps 3;
                                                 let expr = parse_expr ps SEMICOLON in
                                                 let ast = Def (str, expr) in ast
-  | _ -> Fatal "Issues" |> raise
+  | (DEF, _) :: (VAR str, _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
+  | (DEF, _) :: tok :: _ -> Parsing_error ("Missing var", tok) |> raise
+  | _ -> Fatal "Major issue in parsing definitions" |> raise
 
 and parse_if (ps : t) : ast =
   shift ps; let cond = parse_expr ps THEN in
