@@ -114,26 +114,27 @@ let rec shift_n (ps : t) num =
       shift ps; loop (num-1) end
     else () in loop num;;
 
-let check_end (ps : t) (endtok : Tokens.t) (term : term) =
+let check_and_skip (ps : t) (endtok : Tokens.t) : unit =
   match ps.toks with
   | [] -> Fatal "No tokens to parse" |> raise
   | (ftok, p) :: _ -> if endtok = ftok then
-                      let _ = shift ps in term 
+                      shift ps 
                       else
                         Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
 
-let parse_expr (ps : t) (endtok : Tokens.t) : expr =
+let parse_expr (ps : t) : expr =
 
   let rec parse_binop (curr : expr) : expr =
     match ps.toks with
     | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: _ -> shift_n ps 2; Binop(match_op (op, p), curr, match_num num) |> parse_binop
     | [] -> Fatal "Token ended before finding end token" |> raise
-    | (ftok, pos) :: _ -> (if ftok = endtok then let _ = shift ps in curr else
-                    Parsing_error ("Expected expression to either end or continue", (ftok, pos)) |> raise) in
+    | (RPAREN, _) :: _ -> let _ = shift ps in curr
+    | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise in
 
   match ps.toks with
+  | (LPAREN, _) :: num :: _ -> shift_n ps 2; parse_binop (match_num num)
   | [] -> Fatal "No tokens to parse" |> raise
-  | num :: _ -> shift ps; match_num num |> parse_binop;;
+  | hd :: _ -> Parsing_error ("Expression did not start with LPAREN", hd) |> raise;;
 
 let rec parse_nested (ps : t) : term =
   match ps.toks with
@@ -144,25 +145,31 @@ let rec parse_nested (ps : t) : term =
 and parse_def (ps : t) : term =
   match ps.toks with
   | (DEF, _) :: (VAR str, _) :: (EQ, _) :: _ -> shift_n ps 3;
-    let expr = parse_expr ps SEMICOLON in
+    let expr = parse_expr ps in
                                                 let term = Def (str, expr) in term
   | (DEF, _) :: (VAR str, _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
   | (DEF, _) :: tok :: _ -> Parsing_error ("Missing var", tok) |> raise
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
 and parse_if (ps : t) : term =
-  shift ps; let cond = parse_expr ps THEN in
+  shift ps; 
+  let cond = parse_expr ps in
+  let _ = check_and_skip ps THEN in
     let nested_term = parse_nested ps in
       let term = If (cond, nested_term) in term
 
 and parse_elif (ps : t) : term =
-  shift ps; let cond = parse_expr ps THEN in
+  shift ps; 
+  let cond = parse_expr ps in 
+  let _ = check_and_skip ps THEN in
     let term1 = parse_nested ps in
+    let _ = check_and_skip ps ELSE in
       let term2 = parse_nested ps in
         let term = Elif (cond, term1, term2) in term
 
 and parse_ret (ps : t) : term =
-  shift ps; let term = Ret (parse_expr ps SEMICOLON) in term
+  shift ps; 
+  let term = Ret (parse_expr ps) in term
 
 and parse_term (ps : t) (endtok : Tokens.t) : term =
   let term = match ps.toks with
