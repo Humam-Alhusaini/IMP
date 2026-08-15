@@ -97,97 +97,83 @@ let match_op op =
   | (EQ, _) -> Eq
   | _ -> Parsing_error ("Expected operator", op) |> raise;;
 
-type t = {
-  mutable toks : token list;
-};;
+type toks = token list;;
 
-let create tokens : t = { toks = tokens };;
+let create tokens : toks = tokens;;
 
-let shift (ps : t) =
-  match ps.toks with
-  | [] -> Fatal "No more tokens" |> raise
-  | _ :: ls -> ps.toks <- ls;;
-
-let rec shift_n (ps : t) num =
-  let rec loop num =
-    if num > 0 then begin
-      shift ps; loop (num-1) end
-    else () in loop num;;
-
-let check_and_skip (ps : t) (endtok : Tokens.t) : unit =
-  match ps.toks with
+let check_and_skip (ps : toks) (endtok : Tokens.t) : toks =
+  match ps with
   | [] -> Fatal "No tokens to parse" |> raise
-  | (ftok, p) :: _ -> if endtok = ftok then
-                      shift ps 
+  | (ftok, p) :: ls -> if endtok = ftok then
+                       ls
                       else
                         Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
 
-let parse_expr (ps : t) : expr =
+let parse_expr (ps : toks) : toks * expr =
 
-  let rec parse_binop (curr : expr) : expr =
-    match ps.toks with
-    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: _ -> shift_n ps 2; Binop(match_op (op, p), curr, match_num num) |> parse_binop
+  let rec parse_binop (ps : toks) (curr : expr) : toks * expr =
+    match ps with
+    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls (Binop(match_op (op, p), curr, match_num num))
     | [] -> Fatal "Token ended before finding end token" |> raise
-    | (RPAREN, _) :: _ -> let _ = shift ps in curr
+    | (RPAREN, _) :: ls -> (ls, curr)
     | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise in
 
-  match ps.toks with
-  | (LPAREN, _) :: num :: _ -> shift_n ps 2; parse_binop (match_num num)
+  match ps with
+  | (LPAREN, _) :: num :: ls -> parse_binop ls (match_num num)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("Expression did not start with LPAREN", hd) |> raise;;
 
-let rec parse_nested (ps : t) : term =
-  match ps.toks with
-  | (LBRACE, _) :: _ -> shift ps; let cf = parse_term ps RBRACE in cf
+let rec parse_nested (ps : toks) : toks * term =
+  match ps with
+  | (LBRACE, _) :: ls -> parse_term ls RBRACE
   | hd :: _ -> Parsing_error("Expected { for nested", hd) |> raise
   | [] -> Fatal "Major Error in Nested CF Parsing" |> raise
 
-and parse_def (ps : t) : term =
-  match ps.toks with
-  | (DEF, _) :: (VAR str, _) :: (EQ, _) :: _ -> shift_n ps 3;
-    let expr = parse_expr ps in
-                                                let term = Def (str, expr) in term
-  | (DEF, _) :: (VAR str, _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
-  | (DEF, _) :: tok :: _ -> Parsing_error ("Missing var", tok) |> raise
+and parse_def (ps : toks) : toks * term =
+  match ps with
+  | (VAR str, _) :: (EQ, _) :: ls  -> let (ps, expr) = parse_expr ls in
+                                                let term = Def (str, expr) in (ps, term)
+  | (VAR str, _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
+  | tok :: _ -> Parsing_error ("Missing var", tok) |> raise
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
-and parse_if (ps : t) : term =
-  shift ps; 
-  let cond = parse_expr ps in
-  let _ = check_and_skip ps THEN in
-    let nested_term = parse_nested ps in
-      let term = If (cond, nested_term) in term
+and parse_if (ps : toks) : toks * term =
+  let (ps, cond) = parse_expr ps in
+  let ps = check_and_skip ps THEN in
+    let (ps, nested_term) = parse_nested ps in
+      let term = If (cond, nested_term) in (ps, term)
 
-and parse_elif (ps : t) : term =
-  shift ps; 
-  let cond = parse_expr ps in 
-  let _ = check_and_skip ps THEN in
-    let term1 = parse_nested ps in
-    let _ = check_and_skip ps ELSE in
-      let term2 = parse_nested ps in
-        let term = Elif (cond, term1, term2) in term
+and parse_elif (ps : toks) : toks * term =
+  let (ps, cond) = parse_expr ps in 
+  let ps = check_and_skip ps THEN in
+    let (ps, term1) = parse_nested ps in
+    let ps = check_and_skip ps ELSE in
+      let (ps, term2) = parse_nested ps in
+        let term = Elif (cond, term1, term2) in (ps, term)
 
-and parse_ret (ps : t) : term =
-  shift ps; 
-  let term = Ret (parse_expr ps) in term
+and parse_ret (ps : toks) : toks * term =
+  let (ps, expr) = parse_expr ps in
+  let term = Ret expr in (ps, term)
 
-and parse_term (ps : t) (endtok : Tokens.t) : term =
-  let term = match ps.toks with
-  | (DEF, _) :: _ -> parse_def ps
-  | (IF, _) :: _ -> parse_if ps
-  | (ELIF, _) :: _ -> parse_elif ps
-  | (RETURN, _) :: _ -> parse_ret ps
+and parse_term (ps : toks) (endtok : Tokens.t) : toks * term =
+  let (ps, term) = 
+    match ps with
+  | (DEF, _) :: ls -> parse_def ls
+  | (IF, _) :: ls -> parse_if ls
+  | (ELIF, _) :: ls -> parse_elif ls
+  | (RETURN, _) :: ls -> parse_ret ls
   | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
   | [] -> Fatal "Nothing here! Contact maintainers!" |> raise in
-    match ps.toks with
+    match ps with
     | [] -> Fatal "No tokens to parse" |> raise
-    | (ftok, p) :: _ -> if endtok = ftok then
-                      let _ = shift ps in term 
+    | (ftok, p) :: ls -> if endtok = ftok then
+                      (ls, term) 
                       else
                         Parsing_error ("You used Wrong token to end the statement", (ftok, p)) |> raise;;
 
-let rec parse (ps : t) (ast : ast) : ast =
-    match ps.toks with
+let rec parse (ps : toks) (ast : ast) : ast =
+    match ps with
     | [(EOF, _)] -> ast
-    | hd :: _ -> parse ps (ast @ [parse_term ps SEMICOLON]) 
+    | hd :: _ -> let (ps, term) = parse_term ps SEMICOLON in
+                  parse ps (ast @ [term])
     | [] -> Fatal "Didn't encounter EOF token, probably a lexer issue" |> raise
