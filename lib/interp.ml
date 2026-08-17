@@ -23,7 +23,7 @@ let rec simplify_term (ctx : expr_map) (term : term) : ast  =
   | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else [Nop]
   | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
   | Def (str, expr) -> [Def (str, Num (simplify_expr ctx expr))]
-  | Ret expr -> [Ret (Num (simplify_expr ctx expr))] 
+  | Print expr -> [Print (Num (simplify_expr ctx expr))] 
   | Nop -> [Nop]
 
 and simplify_ast (ctx : expr_map) (ast : ast) : ast =
@@ -35,7 +35,7 @@ let rec interp_term (ctx : expr_map) (term : term) : expr_map  =
   match term with
   | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (interp_ast ctx ast1) else ctx
   | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (interp_ast ctx ast1) else (interp_ast ctx ast2)
-  | Ret expr -> Num (simplify_expr ctx expr) |> print fexpr; ctx 
+  | Print expr -> Num (simplify_expr ctx expr) |> print fexpr; ctx 
   | Nop -> ctx
   | Def (str, expr) -> let newexpr = Num (simplify_expr ctx expr) in
                         add str newexpr ctx

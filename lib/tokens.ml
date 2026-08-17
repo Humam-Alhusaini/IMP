@@ -27,4 +27,4 @@ type t =
   | THEN
   | ELIF
   | DEF
-  | RETURN
+  | PRINT

@@ -31,7 +31,7 @@ match tok with
 | THEN -> "THEN"
 | EOF -> "EOF"
 | DEF -> "DEF"
-| RETURN -> "RETURN"
+| PRINT -> "PRINT"
 | ELIF -> "ELIF";;
 
 let rec toks_to_tokens toks : Tokens.t list =
@@ -76,7 +76,7 @@ and term =
 | Def of def
 | Elif of expr * ast * ast
 | If of expr * ast
-| Ret of expr
+| Print of expr
 | Nop
 
 and ast = term list;;
@@ -153,7 +153,7 @@ and parse_elif (ps : toks) : toks * term =
 
 and parse_ret (ps : toks) : toks * term =
   let (ps, expr) = parse_expr ps in
-  let term = Ret expr in (ps, term)
+  let term = Print expr in (ps, term)
 
 and parse_term (ps : toks) : toks * term =
   let (ps, term) = 
@@ -161,7 +161,7 @@ and parse_term (ps : toks) : toks * term =
   | (DEF, _) :: ls -> parse_def ls
   | (IF, _) :: ls -> parse_if ls
   | (ELIF, _) :: ls -> parse_elif ls
-  | (RETURN, _) :: ls -> parse_ret ls
+  | (PRINT, _) :: ls -> parse_ret ls
   | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
   | [] -> Fatal "Nothing here! Contact maintainers!" |> raise in
     match ps with
