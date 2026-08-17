@@ -74,8 +74,8 @@ and def = string * expr
 
 and term =
 | Def of def
-| Elif of expr * term * term
-| If of expr * term
+| Elif of expr * ast * ast
+| If of expr * ast
 | Ret of expr
 | Nop
 
@@ -123,9 +123,9 @@ let parse_expr (ps : toks) : toks * expr =
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("Expression did not start with LPAREN", hd) |> raise;;
 
-let rec parse_nested (ps : toks) : toks * term =
+let rec parse_nested (ps : toks) : toks * ast =
   match ps with
-  | (LBRACE, _) :: ls -> parse_term ls RBRACE
+  | (LBRACE, _) :: ls -> parse ls [] RBRACE
   | hd :: _ -> Parsing_error("Expected { for nested", hd) |> raise
   | [] -> Fatal "Major Error in Nested CF Parsing" |> raise
 
@@ -146,16 +146,16 @@ and parse_if (ps : toks) : toks * term =
 and parse_elif (ps : toks) : toks * term =
   let (ps, cond) = parse_expr ps in 
   let ps = check_and_skip ps THEN in
-    let (ps, term1) = parse_nested ps in
+  let (ps, term1) = parse_nested ps in
     let ps = check_and_skip ps ELSE in
-      let (ps, term2) = parse_nested ps in
+  let (ps, term2) = parse_nested ps in
         let term = Elif (cond, term1, term2) in (ps, term)
 
 and parse_ret (ps : toks) : toks * term =
   let (ps, expr) = parse_expr ps in
   let term = Ret expr in (ps, term)
 
-and parse_term (ps : toks) (endtok : Tokens.t) : toks * term =
+and parse_term (ps : toks) : toks * term =
   let (ps, term) = 
     match ps with
   | (DEF, _) :: ls -> parse_def ls
@@ -165,15 +165,16 @@ and parse_term (ps : toks) (endtok : Tokens.t) : toks * term =
   | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
   | [] -> Fatal "Nothing here! Contact maintainers!" |> raise in
     match ps with
+    | (SEMICOLON, _) :: ls -> (ls, term)
+    | hd :: ls -> Parsing_error ("Expected Semicolon", hd) |> raise
     | [] -> Fatal "No tokens to parse" |> raise
-    | (ftok, p) :: ls -> if endtok = ftok then
-                      (ls, term) 
-                      else
-                        Parsing_error ("You used Wrong token to end the statement", (ftok, p)) |> raise;;
 
-let rec parse (ps : toks) (ast : ast) : ast =
-    match ps with
-    | [(EOF, _)] -> ast
-    | hd :: _ -> let (ps, term) = parse_term ps SEMICOLON in
-                  parse ps (ast @ [term])
+and parse (ps : toks) (ast : ast) (endtok : Tokens.t) : toks * ast =
+    let (toks, term) = parse_term ps in
+    match toks with
     | [] -> Fatal "Didn't encounter EOF token, probably a lexer issue" |> raise
+    | (ftok, _) :: ls -> 
+      let newast = ast @ [term] in
+        if endtok = ftok then (ls, newast) else parse toks newast endtok;;
+
+

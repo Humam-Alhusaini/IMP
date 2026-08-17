@@ -18,18 +18,23 @@ let rec simplify_expr (ctx : expr_map) (expr : expr) : int =
   | Num y -> y
   | Var str -> simplify_expr ctx (find str ctx);;
 
-let rec simplify_term (ctx : expr_map) (term : term) : term  =
+let rec simplify_term (ctx : expr_map) (term : term) : ast  =
   match term with
-  | If (expr, term1) -> if (simplify_expr ctx expr) > 0 then (simplify_term ctx term1) else Nop
-  | Elif (expr, term1, term2) -> if (simplify_expr ctx expr) > 0 then (simplify_term ctx term1) else (simplify_term ctx term2)
-  | Def (str, expr) -> Def (str, Num (simplify_expr ctx expr))
-  | Ret expr -> Ret (Num (simplify_expr ctx expr)) 
-  | Nop -> Nop
+  | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else [Nop]
+  | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
+  | Def (str, expr) -> [Def (str, Num (simplify_expr ctx expr))]
+  | Ret expr -> [Ret (Num (simplify_expr ctx expr))] 
+  | Nop -> [Nop]
+
+and simplify_ast (ctx : expr_map) (ast : ast) : ast =
+  match ast with
+  | [] -> []
+  | hd :: ls -> let ast = simplify_term ctx hd in ast @ simplify_ast ctx ls;;
 
 let rec interp_term (ctx : expr_map) (term : term) : expr_map  =
   match term with
-  | If (expr, term1) -> if (simplify_expr ctx expr) > 0 then (interp_term ctx term1) else ctx
-  | Elif (expr, term1, term2) -> if (simplify_expr ctx expr) > 0 then (interp_term ctx term1) else (interp_term ctx term2)
+  | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (interp_ast ctx ast1) else ctx
+  | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (interp_ast ctx ast1) else (interp_ast ctx ast2)
   | Ret expr -> Num (simplify_expr ctx expr) |> print fexpr; ctx 
   | Nop -> ctx
   | Def (str, expr) -> let newexpr = Num (simplify_expr ctx expr) in
@@ -46,7 +51,7 @@ let read str (ctx : expr_map) : expr_map =
     let lex = Lexer.create str in
       let tokens = Lexer.tokenize lex [] in
         let ps = Parser.create tokens in
-          let ast = Parser.parse ps [] in
+        let (_,ast) = Parser.parse ps [] EOF in
           let _ =  print fast ast in
             let newctx = interp_ast ctx ast in newctx
   with 

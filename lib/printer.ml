@@ -28,12 +28,12 @@ let rec fdef ((name, expr) : def) =
 let rec fterm term = 
   match term with 
   | Def d -> fdef d
-  | Elif (cond, term1, term2) -> sprintf "If %s then %s else %s" (fexpr cond) (fterm term1) (fterm term2)
-  | If (cond, term) -> sprintf "If %s then %s" (fexpr cond) (fterm term)
+  | Elif (cond, ast1, ast2) -> sprintf "If %s then %s else %s" (fexpr cond) (fast ast1) (fast ast2)
+  | If (cond, ast) -> sprintf "If %s then %s" (fexpr cond) (fast ast)
   | Ret expr -> fexpr expr |> sprintf "Return %s"
   | Nop -> "Nop"
 
-let rec fast ast = 
+and fast ast = 
   match ast with
   | hd :: ls -> sprintf "%s; %s" (fterm hd) (fast ls)
   | [] -> ""
