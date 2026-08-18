@@ -1,4 +1,6 @@
+def x = (0);
 
-
-
-return 3;
+elif (x) then 
+{ print(3); }
+else 
+{ print(5); };
