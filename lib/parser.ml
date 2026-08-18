@@ -11,6 +11,10 @@ match tok with
 | PLUS -> "PLUS"
 | SUB -> "SUB"
 | EQ -> "EQ"
+| NEQ -> "NEQ"
+| NOT -> "NOT"
+| GT -> "GT"
+| LE -> "LE"
 | LPAREN -> "LPAREN"
 | RPAREN -> "RPAREN"
 | LBRACE -> "LBRACE"
@@ -88,21 +92,6 @@ and term =
 
 and ast = term list;;
 
-let match_num n =
-  match n with
-  | (NUM y, _) -> Num y
-  | (TRUE, _) -> Num 1
-  | (FALSE, _) -> Num 0
-  | (VAR y, _) -> Var y
-  | _ -> Parsing_error ("Expected num", n) |> raise;;
-
-let match_op op =
-  match op with
-  | (MULT, _) -> (fun a b -> Amult (a, b))
-  | (PLUS, _) -> (fun a b -> Aplus (a, b))
-  | (SUB, _) -> (fun a b -> Asub (a, b))
-  | _ -> Parsing_error ("Expected operator", op) |> raise;;
-
 type toks = token list;;
 
 let create tokens : toks = tokens;;
@@ -119,11 +108,17 @@ let parse_aexp (ps : toks) : toks * aexp =
 
   let rec parse_binop (ps : toks) (curr : aexp) : toks * aexp =
     match ps with
-    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls ((match_op (op, p)) curr (match_num num))
+    | (MULT, p) :: (NUM y, _) :: ls -> parse_binop ls (Amult (curr, Num y))
+    | (PLUS, p) :: (NUM y, _) :: ls -> parse_binop ls (Aplus (curr, Num y))
+    | (SUB, p) :: (NUM y, _) :: ls -> parse_binop ls (Asub (curr, Num y))
     | [] -> Fatal "Token ended before finding end token" |> raise
     | (RPAREN, _) :: ls -> (ls, curr)
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
-
+  let match_num n =
+    match n with
+    | (NUM y, _) -> Num y
+    | (VAR y, _) -> Var y
+    | _ -> Parsing_error ("Expected num", n) |> raise in
   match ps with
   | (LPAREN, _) :: num :: ls -> parse_binop ls (match_num num)
   | [] -> Fatal "No tokens to parse" |> raise
@@ -139,7 +134,7 @@ let parse_bexp (ps : toks) : toks * bexp =
   (*
   let rec parse_binop (ps : toks) (curr : bexp) : toks * bexp =
     match ps with
-    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls (Binop(match_op (op, p), curr, match_num num))
+    | ((AND | OR | EQ | NEQ) as op, p) :: num :: ls -> ()
     | [] -> Fatal "Token ended before finding end token" |> raise
     | (RPAREN, _) :: ls -> (ls, curr)
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in

@@ -40,6 +40,7 @@ let string_to_tok str : Tokens.t =
   | "def" -> DEF
   | "elif" -> ELIF
   | "print" -> PRINT
+  | "not" -> NOT
   | _ -> VAR str;;
 
 type t = {
@@ -128,6 +129,8 @@ let rec tokenize (lx : t) (tokens : token list) : token list =
                        | '*' -> MULT
                        | '-' -> SUB
                        | '=' -> EQ
+                       | '~' -> NEQ
+                       | '>' -> GT
                        | '(' -> LPAREN
                        | ')' -> RPAREN
                        | '{' -> LBRACE

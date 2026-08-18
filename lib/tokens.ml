@@ -6,6 +6,10 @@ type t =
   | PLUS
   | SUB
   | EQ
+  | NEQ
+  | NOT
+  | GT
+  | LE
   | LPAREN
   | RPAREN
   | LBRACE
