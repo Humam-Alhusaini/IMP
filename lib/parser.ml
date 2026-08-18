@@ -69,6 +69,13 @@ type aexp =
 and bexp = 
   | True
   | False
+  | And of bexp * bexp
+  | Or of bexp * bexp
+  | Not of bexp
+  | BEq of aexp * aexp
+  | BNeq of aexp * aexp
+  | BLe of aexp * aexp
+  | BGt of aexp * aexp
 
 and def = string * aexp
 
@@ -129,14 +136,14 @@ let parse_bool ((tok, pos) : token) : bexp =
   | _ -> Parsing_error ("Expected bool", (tok, pos)) |> raise
 
 let parse_bexp (ps : toks) : toks * bexp =
-(*
+  (*
   let rec parse_binop (ps : toks) (curr : bexp) : toks * bexp =
     match ps with
     | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls (Binop(match_op (op, p), curr, match_num num))
     | [] -> Fatal "Token ended before finding end token" |> raise
     | (RPAREN, _) :: ls -> (ls, curr)
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
-*)
+    *)
   match ps with
   | (LPAREN, _) :: bool :: (RPAREN, _) :: ls  -> (ls, parse_bool bool)
   | [] -> Fatal "No tokens to parse" |> raise

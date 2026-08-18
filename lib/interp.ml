@@ -4,10 +4,6 @@ open Parser
 open Ctx
 
 open Printf
-  
-let match_bool = function
-  | True -> true
-  | False -> false;;
 
 let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
   match aexp with
@@ -17,10 +13,22 @@ let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
   | Num y -> y
   | Var str -> simplify_aexp ctx (find str ctx);;
 
+let rec simplify_bexp (ctx : aexp_map) (bexp : bexp) : bool =
+  match bexp with
+  | True -> true
+  | False -> false
+  | And (bexp1, bexp2) -> simplify_bexp ctx bexp1 && simplify_bexp ctx bexp2
+  | Or (bexp1, bexp2) -> simplify_bexp ctx bexp1 || simplify_bexp ctx bexp2
+  | Not bexp -> not (simplify_bexp ctx bexp)
+  | BEq (aexp1, aexp2) -> simplify_aexp ctx aexp1 = simplify_aexp ctx aexp2
+  | BNeq (aexp1, aexp2) -> simplify_aexp ctx aexp1 <> simplify_aexp ctx aexp2
+  | BLe (aexp1, aexp2) -> simplify_aexp ctx aexp1 <= simplify_aexp ctx aexp2
+  | BGt (aexp1, aexp2) -> simplify_aexp ctx aexp1 > simplify_aexp ctx aexp2
+
 let rec simplify_term (ctx : aexp_map) (term : term) : ast  =
   match term with
-  | If (bexp, ast1) -> if (match_bool bexp) then (simplify_ast ctx ast1) else [Nop]
-  | Elif (bexp, ast1, ast2) -> if (match_bool bexp) then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
+  | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else [Nop]
+  | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
   | Def (str, aexp) -> [Def (str, Num (simplify_aexp ctx aexp))]
   | Print aexp -> [Print (Num (simplify_aexp ctx aexp))] 
   | Nop -> [Nop]
@@ -32,8 +40,8 @@ and simplify_ast (ctx : aexp_map) (ast : ast) : ast =
 
 let rec interp_term (ctx : aexp_map) (term : term) : aexp_map  =
   match term with
-  | If (bexp, ast1) -> if (match_bool bexp) then (interp_ast ctx ast1) else ctx
-  | Elif (bexp, ast1, ast2) -> if (match_bool bexp) then (interp_ast ctx ast1) else (interp_ast ctx ast2)
+  | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else ctx
+  | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else (interp_ast ctx ast2)
   | Print aexp -> Num (simplify_aexp ctx aexp) |> print faexp; ctx 
   | Nop -> ctx
   | Def (str, aexp) -> let newaexp = Num (simplify_aexp ctx aexp) in
