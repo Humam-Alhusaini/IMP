@@ -10,15 +10,10 @@ let match_bool = function
   | False -> false;;
 
 let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
-  let match_op op aexp1 aexp2 = 
-    match op with
-    | Add -> simplify_aexp ctx aexp1 + simplify_aexp ctx aexp2
-    | Sub -> simplify_aexp ctx aexp1 - simplify_aexp ctx aexp2
-    | Mult -> simplify_aexp ctx aexp1 * simplify_aexp ctx aexp2
-    | Eq -> if simplify_aexp ctx aexp1 = simplify_aexp ctx aexp2 then 1 else 0 in
-
   match aexp with
-  | Binop (op, aexp1, aexp2) -> match_op op aexp1 aexp2
+  | Aplus (aexp1, aexp2) -> simplify_aexp ctx aexp1 + simplify_aexp ctx aexp2
+  | Asub (aexp1, aexp2) -> simplify_aexp ctx aexp1 - simplify_aexp ctx aexp2
+  | Amult (aexp1, aexp2) -> simplify_aexp ctx aexp1 * simplify_aexp ctx aexp2
   | Num y -> y
   | Var str -> simplify_aexp ctx (find str ctx);;
 

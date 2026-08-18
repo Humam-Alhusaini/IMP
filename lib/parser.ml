@@ -61,14 +61,10 @@ exception Fatal of string
 
 type aexp =
 | Num of int
-| Binop of op * aexp * aexp
+| Aplus of aexp * aexp
+| Asub of aexp * aexp
+| Amult of aexp * aexp
 | Var of string
-
-and op =
-| Add
-| Sub
-| Mult
-| Eq
 
 and bexp = 
   | True
@@ -95,10 +91,9 @@ let match_num n =
 
 let match_op op =
   match op with
-  | (MULT, _) -> Mult
-  | (PLUS, _) -> Add
-  | (SUB, _) -> Sub
-  | (EQ, _) -> Eq
+  | (MULT, _) -> (fun a b -> Amult (a, b))
+  | (PLUS, _) -> (fun a b -> Aplus (a, b))
+  | (SUB, _) -> (fun a b -> Asub (a, b))
   | _ -> Parsing_error ("Expected operator", op) |> raise;;
 
 type toks = token list;;
@@ -117,7 +112,7 @@ let parse_aexp (ps : toks) : toks * aexp =
 
   let rec parse_binop (ps : toks) (curr : aexp) : toks * aexp =
     match ps with
-    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls (Binop(match_op (op, p), curr, match_num num))
+    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls ((match_op (op, p)) curr (match_num num))
     | [] -> Fatal "Token ended before finding end token" |> raise
     | (RPAREN, _) :: ls -> (ls, curr)
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in

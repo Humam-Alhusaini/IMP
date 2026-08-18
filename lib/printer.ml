@@ -3,18 +3,15 @@ open Printf
 open Parser
 open Ctx
 
-let fop op =
-  match op with
-  | Add -> "+"
-  | Sub -> "-"
-  | Mult -> "*"
-  | Eq -> "=";;
-
 let rec faexp aexp = 
   match aexp with 
   | Num n -> sprintf "%d" n
-  | Binop (op, aexp1, aexp2) -> 
-      sprintf "(%s %s %s)" (faexp aexp1) (fop op) (faexp aexp2)
+  | Aplus (aexp1, aexp2) -> 
+      sprintf "(%s + %s)" (faexp aexp1) (faexp aexp2)
+  | Asub (aexp1, aexp2) -> 
+      sprintf "(%s - %s)" (faexp aexp1) (faexp aexp2)
+  | Amult (aexp1, aexp2) -> 
+      sprintf "(%s * %s)" (faexp aexp1) (faexp aexp2)
   | Var str -> str
 
 let fbexp bexp = 
