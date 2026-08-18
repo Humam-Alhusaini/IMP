@@ -59,9 +59,9 @@ sprintf "%s, got %s" err (format_token token);;
 exception Parsing_error of string * token
 exception Fatal of string
 
-type expr =
+type aexp =
 | Num of int
-| Binop of op * expr * expr
+| Binop of op * aexp * aexp
 | Var of string
 
 and op =
@@ -70,13 +70,13 @@ and op =
 | Mult
 | Eq
 
-and def = string * expr
+and def = string * aexp
 
 and term =
 | Def of def
-| Elif of expr * ast * ast
-| If of expr * ast
-| Print of expr
+| Elif of aexp * ast * ast
+| If of aexp * ast
+| Print of aexp
 | Nop
 
 and ast = term list;;
@@ -109,19 +109,19 @@ let check_and_skip (ps : toks) (endtok : Tokens.t) : toks =
                       else
                         Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
 
-let parse_expr (ps : toks) : toks * expr =
+let parse_aexp (ps : toks) : toks * aexp =
 
-  let rec parse_binop (ps : toks) (curr : expr) : toks * expr =
+  let rec parse_binop (ps : toks) (curr : aexp) : toks * aexp =
     match ps with
     | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls (Binop(match_op (op, p), curr, match_num num))
     | [] -> Fatal "Token ended before finding end token" |> raise
     | (RPAREN, _) :: ls -> (ls, curr)
-    | hd :: _ -> Parsing_error ("Expected expression to either end or continue", hd) |> raise in
+    | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
 
   match ps with
   | (LPAREN, _) :: num :: ls -> parse_binop ls (match_num num)
   | [] -> Fatal "No tokens to parse" |> raise
-  | hd :: _ -> Parsing_error ("Expression did not start with LPAREN", hd) |> raise;;
+  | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 
 let rec parse_nested (ps : toks) : toks * ast =
   match ps with
@@ -131,20 +131,20 @@ let rec parse_nested (ps : toks) : toks * ast =
 
 and parse_def (ps : toks) : toks * term =
   match ps with
-  | (VAR str, _) :: (EQ, _) :: ls  -> let (ps, expr) = parse_expr ls in
-                                                let term = Def (str, expr) in (ps, term)
+  | (VAR str, _) :: (EQ, _) :: ls  -> let (ps, aexp) = parse_aexp ls in
+                                                let term = Def (str, aexp) in (ps, term)
   | (VAR str, _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
   | tok :: _ -> Parsing_error ("Missing var", tok) |> raise
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
 and parse_if (ps : toks) : toks * term =
-  let (ps, cond) = parse_expr ps in
+  let (ps, cond) = parse_aexp ps in
   let ps = check_and_skip ps THEN in
     let (ps, nested_term) = parse_nested ps in
       let term = If (cond, nested_term) in (ps, term)
 
 and parse_elif (ps : toks) : toks * term =
-  let (ps, cond) = parse_expr ps in 
+  let (ps, cond) = parse_aexp ps in 
   let ps = check_and_skip ps THEN in
   let (ps, term1) = parse_nested ps in
     let ps = check_and_skip ps ELSE in
@@ -152,8 +152,8 @@ and parse_elif (ps : toks) : toks * term =
         let term = Elif (cond, term1, term2) in (ps, term)
 
 and parse_ret (ps : toks) : toks * term =
-  let (ps, expr) = parse_expr ps in
-  let term = Print expr in (ps, term)
+  let (ps, aexp) = parse_aexp ps in
+  let term = Print aexp in (ps, term)
 
 and parse_term (ps : toks) : toks * term =
   let (ps, term) = 

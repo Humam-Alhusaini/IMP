@@ -10,27 +10,27 @@ let fop op =
   | Mult -> "*"
   | Eq -> "=";;
 
-let rec fexpr expr = 
-  match expr with 
+let rec faexp aexp = 
+  match aexp with 
   | Num n -> sprintf "%d" n
-  | Binop (op, expr1, expr2) -> 
-      sprintf "(%s %s %s)" (fexpr expr1) (fop op) (fexpr expr2)
+  | Binop (op, aexp1, aexp2) -> 
+      sprintf "(%s %s %s)" (faexp aexp1) (fop op) (faexp aexp2)
   | Var str -> str
 
-let rec fmap (map : expr_map) : string =
+let rec fmap (map : aexp_map) : string =
   match map with 
   | Empty -> ""
-  | Elem (key, expr, map') -> sprintf "%s -> %s\n%s" key (fexpr expr) (fmap map');;
+  | Elem (key, aexp, map') -> sprintf "%s -> %s\n%s" key (faexp aexp) (fmap map');;
 
-let rec fdef ((name, expr) : def) = 
-  sprintf "Def %s = %s" name (fexpr expr)
+let rec fdef ((name, aexp) : def) = 
+  sprintf "Def %s = %s" name (faexp aexp)
 
 let rec fterm term = 
   match term with 
   | Def d -> fdef d
-  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n { %s }\n  else\n { %s }" (fexpr cond) (fast ast1) (fast ast2)
-  | If (cond, ast) -> sprintf "If (%s) then { %s }" (fexpr cond) (fast ast)
-  | Print expr -> fexpr expr |> sprintf "Print (%s)"
+  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n { %s }\n  else\n { %s }" (faexp cond) (fast ast1) (fast ast2)
+  | If (cond, ast) -> sprintf "If (%s) then { %s }" (faexp cond) (fast ast)
+  | Print aexp -> faexp aexp |> sprintf "Print (%s)"
   | Nop -> "Nop"
 
 and fast ast = 

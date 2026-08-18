@@ -5,48 +5,48 @@ open Ctx
 
 open Printf
   
-let rec simplify_expr (ctx : expr_map) (expr : expr) : int =
-  let match_op op expr1 expr2 = 
+let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
+  let match_op op aexp1 aexp2 = 
     match op with
-    | Add -> simplify_expr ctx expr1 + simplify_expr ctx expr2
-    | Sub -> simplify_expr ctx expr1 - simplify_expr ctx expr2
-    | Mult -> simplify_expr ctx expr1 * simplify_expr ctx expr2
-    | Eq -> if simplify_expr ctx expr1 = simplify_expr ctx expr2 then 1 else 0 in
+    | Add -> simplify_aexp ctx aexp1 + simplify_aexp ctx aexp2
+    | Sub -> simplify_aexp ctx aexp1 - simplify_aexp ctx aexp2
+    | Mult -> simplify_aexp ctx aexp1 * simplify_aexp ctx aexp2
+    | Eq -> if simplify_aexp ctx aexp1 = simplify_aexp ctx aexp2 then 1 else 0 in
 
-  match expr with
-  | Binop (op, expr1, expr2) -> match_op op expr1 expr2
+  match aexp with
+  | Binop (op, aexp1, aexp2) -> match_op op aexp1 aexp2
   | Num y -> y
-  | Var str -> simplify_expr ctx (find str ctx);;
+  | Var str -> simplify_aexp ctx (find str ctx);;
 
-let rec simplify_term (ctx : expr_map) (term : term) : ast  =
+let rec simplify_term (ctx : aexp_map) (term : term) : ast  =
   match term with
-  | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else [Nop]
-  | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
-  | Def (str, expr) -> [Def (str, Num (simplify_expr ctx expr))]
-  | Print expr -> [Print (Num (simplify_expr ctx expr))] 
+  | If (aexp, ast1) -> if (simplify_aexp ctx aexp) > 0 then (simplify_ast ctx ast1) else [Nop]
+  | Elif (aexp, ast1, ast2) -> if (simplify_aexp ctx aexp) > 0 then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
+  | Def (str, aexp) -> [Def (str, Num (simplify_aexp ctx aexp))]
+  | Print aexp -> [Print (Num (simplify_aexp ctx aexp))] 
   | Nop -> [Nop]
 
-and simplify_ast (ctx : expr_map) (ast : ast) : ast =
+and simplify_ast (ctx : aexp_map) (ast : ast) : ast =
   match ast with
   | [] -> []
   | hd :: ls -> let ast = simplify_term ctx hd in ast @ simplify_ast ctx ls;;
 
-let rec interp_term (ctx : expr_map) (term : term) : expr_map  =
+let rec interp_term (ctx : aexp_map) (term : term) : aexp_map  =
   match term with
-  | If (expr, ast1) -> if (simplify_expr ctx expr) > 0 then (interp_ast ctx ast1) else ctx
-  | Elif (expr, ast1, ast2) -> if (simplify_expr ctx expr) > 0 then (interp_ast ctx ast1) else (interp_ast ctx ast2)
-  | Print expr -> Num (simplify_expr ctx expr) |> print fexpr; ctx 
+  | If (aexp, ast1) -> if (simplify_aexp ctx aexp) > 0 then (interp_ast ctx ast1) else ctx
+  | Elif (aexp, ast1, ast2) -> if (simplify_aexp ctx aexp) > 0 then (interp_ast ctx ast1) else (interp_ast ctx ast2)
+  | Print aexp -> Num (simplify_aexp ctx aexp) |> print faexp; ctx 
   | Nop -> ctx
-  | Def (str, expr) -> let newexpr = Num (simplify_expr ctx expr) in
-                        add str newexpr ctx
+  | Def (str, aexp) -> let newaexp = Num (simplify_aexp ctx aexp) in
+                        add str newaexp ctx
 
-and interp_ast (ctx : expr_map) (ast : ast) : expr_map =
+and interp_ast (ctx : aexp_map) (ast : ast) : aexp_map =
   match ast with
   | [] -> let _ = print_string "ended" in ctx
   | hd :: ls -> let newctx = interp_term ctx hd in
                 interp_ast newctx ls;;
 
-let read str (ctx : expr_map) : expr_map =
+let read str (ctx : aexp_map) : aexp_map =
   try
     let lex = Lexer.create str in
       let tokens = Lexer.tokenize lex [] in
