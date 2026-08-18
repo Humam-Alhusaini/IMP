@@ -1,6 +1,6 @@
 def x = (0);
 
-elif (x) then 
-{ print(3); }
+elif (false) then 
+{ print(x); }
 else 
 { print(5); };

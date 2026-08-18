@@ -70,12 +70,16 @@ and op =
 | Mult
 | Eq
 
+and bexp = 
+  | True
+  | False
+
 and def = string * aexp
 
 and term =
 | Def of def
-| Elif of aexp * ast * ast
-| If of aexp * ast
+| Elif of bexp * ast * ast
+| If of bexp * ast
 | Print of aexp
 | Nop
 
@@ -123,6 +127,26 @@ let parse_aexp (ps : toks) : toks * aexp =
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 
+let parse_bool ((tok, pos) : token) : bexp =
+  match tok with
+  | TRUE -> True
+  | FALSE -> False
+  | _ -> Parsing_error ("Expected bool", (tok, pos)) |> raise
+
+let parse_bexp (ps : toks) : toks * bexp =
+(*
+  let rec parse_binop (ps : toks) (curr : bexp) : toks * bexp =
+    match ps with
+    | ((MULT | SUB | PLUS | EQ) as op, p) :: num :: ls -> parse_binop ls (Binop(match_op (op, p), curr, match_num num))
+    | [] -> Fatal "Token ended before finding end token" |> raise
+    | (RPAREN, _) :: ls -> (ls, curr)
+    | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
+*)
+  match ps with
+  | (LPAREN, _) :: bool :: (RPAREN, _) :: ls  -> (ls, parse_bool bool)
+  | [] -> Fatal "No tokens to parse" |> raise
+  | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
+
 let rec parse_nested (ps : toks) : toks * ast =
   match ps with
   | (LBRACE, _) :: ls -> parse ls [] RBRACE
@@ -138,13 +162,13 @@ and parse_def (ps : toks) : toks * term =
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
 and parse_if (ps : toks) : toks * term =
-  let (ps, cond) = parse_aexp ps in
+  let (ps, cond) = parse_bexp ps in
   let ps = check_and_skip ps THEN in
     let (ps, nested_term) = parse_nested ps in
       let term = If (cond, nested_term) in (ps, term)
 
 and parse_elif (ps : toks) : toks * term =
-  let (ps, cond) = parse_aexp ps in 
+  let (ps, cond) = parse_bexp ps in 
   let ps = check_and_skip ps THEN in
   let (ps, term1) = parse_nested ps in
     let ps = check_and_skip ps ELSE in

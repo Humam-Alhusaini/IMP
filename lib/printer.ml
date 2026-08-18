@@ -17,6 +17,11 @@ let rec faexp aexp =
       sprintf "(%s %s %s)" (faexp aexp1) (fop op) (faexp aexp2)
   | Var str -> str
 
+let fbexp bexp = 
+  match bexp with 
+  | True -> "True"
+  | False -> "False";;
+
 let rec fmap (map : aexp_map) : string =
   match map with 
   | Empty -> ""
@@ -28,8 +33,8 @@ let rec fdef ((name, aexp) : def) =
 let rec fterm term = 
   match term with 
   | Def d -> fdef d
-  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n { %s }\n  else\n { %s }" (faexp cond) (fast ast1) (fast ast2)
-  | If (cond, ast) -> sprintf "If (%s) then { %s }" (faexp cond) (fast ast)
+  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n { %s }\n  else\n { %s }" (fbexp cond) (fast ast1) (fast ast2)
+  | If (cond, ast) -> sprintf "If (%s) then { %s }" (fbexp cond) (fast ast)
   | Print aexp -> faexp aexp |> sprintf "Print (%s)"
   | Nop -> "Nop"
 

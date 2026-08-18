@@ -5,6 +5,10 @@ open Ctx
 
 open Printf
   
+let match_bool = function
+  | True -> true
+  | False -> false;;
+
 let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
   let match_op op aexp1 aexp2 = 
     match op with
@@ -20,8 +24,8 @@ let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
 
 let rec simplify_term (ctx : aexp_map) (term : term) : ast  =
   match term with
-  | If (aexp, ast1) -> if (simplify_aexp ctx aexp) > 0 then (simplify_ast ctx ast1) else [Nop]
-  | Elif (aexp, ast1, ast2) -> if (simplify_aexp ctx aexp) > 0 then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
+  | If (bexp, ast1) -> if (match_bool bexp) then (simplify_ast ctx ast1) else [Nop]
+  | Elif (bexp, ast1, ast2) -> if (match_bool bexp) then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
   | Def (str, aexp) -> [Def (str, Num (simplify_aexp ctx aexp))]
   | Print aexp -> [Print (Num (simplify_aexp ctx aexp))] 
   | Nop -> [Nop]
@@ -33,8 +37,8 @@ and simplify_ast (ctx : aexp_map) (ast : ast) : ast =
 
 let rec interp_term (ctx : aexp_map) (term : term) : aexp_map  =
   match term with
-  | If (aexp, ast1) -> if (simplify_aexp ctx aexp) > 0 then (interp_ast ctx ast1) else ctx
-  | Elif (aexp, ast1, ast2) -> if (simplify_aexp ctx aexp) > 0 then (interp_ast ctx ast1) else (interp_ast ctx ast2)
+  | If (bexp, ast1) -> if (match_bool bexp) then (interp_ast ctx ast1) else ctx
+  | Elif (bexp, ast1, ast2) -> if (match_bool bexp) then (interp_ast ctx ast1) else (interp_ast ctx ast2)
   | Print aexp -> Num (simplify_aexp ctx aexp) |> print faexp; ctx 
   | Nop -> ctx
   | Def (str, aexp) -> let newaexp = Num (simplify_aexp ctx aexp) in
