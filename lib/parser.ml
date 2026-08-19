@@ -1,9 +1,8 @@
 
 open Lexer
-open Tokens
 open Printf
 
-let format_tok (tok : Tokens.t) =
+let format_tok (tok : token) =
 match tok with
 | NUM i -> sprintf "NUM(%i)" i
 | VAR s -> sprintf "VAR(%s)" s
@@ -38,7 +37,7 @@ match tok with
 | PRINT -> "PRINT"
 | ELIF -> "ELIF";;
 
-let rec toks_to_tokens toks : Tokens.t list =
+let rec toks_to_tokens toks : token list =
 match toks with
 | [] -> []
 | (token, _) :: tl -> token :: toks_to_tokens tl;;
@@ -53,14 +52,13 @@ match toks with
 let format_pos (pos : position) : string =
 sprintf "line %d, offset %d" pos.line_num pos.bol_off;;
 
-let format_token (token : token) : string =
-let (tok, pos) = token in
+let format_token ((tok, pos) : parseable_token) : string =
   sprintf "%s at %s" (format_tok tok) (format_pos pos);;
 
-let error_of_token (err: string) (token : token) : string =
-sprintf "%s, got %s" err (format_token token);;
+let error_of_token (err: string) (tok : parseable_token) : string =
+sprintf "%s, got %s" err (format_token tok);;
 
-exception Parsing_error of string * token
+exception Parsing_error of string * parseable_token
 exception Fatal of string
 
 type aexp =
@@ -92,11 +90,11 @@ and term =
 
 and ast = term list;;
 
-type toks = token list;;
+type toks = parseable_token list;;
 
 let create tokens : toks = tokens;;
 
-let check_and_skip (ps : toks) (endtok : Tokens.t) : toks =
+let check_and_skip (ps : toks) (endtok : token) : toks =
   match ps with
   | [] -> Fatal "No tokens to parse" |> raise
   | (ftok, p) :: ls -> if endtok = ftok then
@@ -124,7 +122,7 @@ let parse_aexp (ps : toks) : toks * aexp =
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 
-let parse_bool ((tok, pos) : token) : bexp =
+let parse_bool ((tok, pos) : parseable_token) : bexp =
   match tok with
   | TRUE -> True
   | FALSE -> False
@@ -190,7 +188,7 @@ and parse_term (ps : toks) : toks * term =
     | hd :: ls -> Parsing_error ("Expected Semicolon", hd) |> raise
     | [] -> Fatal "No tokens to parse" |> raise
 
-and parse (ps : toks) (ast : ast) (endtok : Tokens.t) : toks * ast =
+and parse (ps : toks) (ast : ast) (endtok : token) : toks * ast =
     let (toks, term) = parse_term ps in
     match toks with
     | [] -> Fatal "Didn't encounter EOF token, probably a lexer issue" |> raise

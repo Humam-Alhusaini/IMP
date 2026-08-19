@@ -1,5 +1,5 @@
 (library
  (name Lang)
 
- (modules tokens lexer printer parser interp ctx)
+ (modules lexer printer parser interp ctx)
  )

@@ -1,4 +1,38 @@
 
+type token = 
+  | NUM of int
+  | VAR of string
+  | MULT
+  | PLUS
+  | SUB
+  | EQ
+  | NEQ
+  | NOT
+  | GT
+  | LE
+  | LPAREN
+  | RPAREN
+  | LBRACE
+  | RBRACE
+  | LBRACK
+  | RBRACK
+  | SEMICOLON
+  | COLON
+  | AND
+  | OR
+  | COMMA
+  | PERIOD
+  | IF
+  | ELSE
+  | TRUE
+  | FALSE
+  | NAT
+  | EOF
+  | THEN
+  | ELIF
+  | DEF
+  | PRINT
+
 type cursor = {
 	mutable line_num : int; (*The line number*)
 	mutable bol_off : int; (*The offset between the cursor and the start of the line*)
@@ -17,11 +51,10 @@ let curs_to_pos (curs : cursor) : position =
 let pos_to_curs (pos : position) : cursor =
   {line_num = pos.line_num; bol_off = pos.bol_off; offset = pos.offset};;
 
-type token =  (Tokens.t * position);;
+type parseable_token = (token * position);;
 
-exception Lexing_error of string * Tokens.t list * cursor;;
+exception Lexing_error of string * token list * cursor;;
 
-open Tokens
 open Printf
 
 let string_of_chars chars =
@@ -29,7 +62,7 @@ let string_of_chars chars =
   List.iter (Buffer.add_char buf) chars;
   Buffer.contents buf;;
 
-let string_to_tok str : Tokens.t =
+let string_to_tok str : token =
   match str with
   | "if" -> IF
   | "then" -> THEN
@@ -68,7 +101,7 @@ let new_line (lx : t) =
 
 let at_eof (lx : t) : bool = lx.curs.offset >= String.length lx.txt;;
 
-let rec tokenize (lx : t) (tokens : token list) : token list =
+let rec tokenize (lx : t) (tokens : parseable_token list) : parseable_token list =
 
   let tokenize_next toks = shiftr lx; tokenize lx toks in
 
@@ -92,7 +125,7 @@ let rec tokenize (lx : t) (tokens : token list) : token list =
         let token = NUM final_num in token
           in
 
-  let rec tokenize_word (chars : char list) : Tokens.t =
+  let rec tokenize_word (chars : char list) : token =
     shiftr lx;
     if at_eof lx |> not then begin
       let char = lx.txt.[lx.curs.offset] in
