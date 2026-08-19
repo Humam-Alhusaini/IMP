@@ -147,6 +147,21 @@ let rec tokenize (lx : t) (tokens : parseable_token list) : parseable_token list
     else
     let (toks, _) = List.split tokens in
       Lexing_error ("Forgot to close comment", toks, lx.curs) |> raise in
+  
+  let tokenize_symbol () : token = 
+    shiftr lx;
+    if at_eof lx |> not then begin
+      let char = lx.txt.[lx.curs.offset] in
+      match char with
+      | '=' -> LE
+      | '>' -> NEQ
+      | _ ->
+          let (toks, _) = List.split tokens in
+        Lexing_error ("< should either end with = or >", toks, lx.curs) |> raise end
+  else 
+    let (toks, _) = List.split tokens in
+    Lexing_error ("< should either end with = or >, but it ended with EOF", toks, lx.curs) |> raise
+in
 
   if at_eof lx |> not then begin
     let char = lx.txt.[lx.curs.offset] in
@@ -158,11 +173,11 @@ let rec tokenize (lx : t) (tokens : parseable_token list) : parseable_token list
            let t = match char with
                        | 'a' .. 'z' | 'A' .. 'Z' ->  tokenize_word [char]
                        | '0' .. '9' -> tokenize_num [char]
+                       | '<' -> tokenize_symbol () (*Add an interp symbol function*)
                        | '+' -> PLUS
                        | '*' -> MULT
                        | '-' -> SUB
                        | '=' -> EQ
-                       | '~' -> NEQ
                        | '>' -> GT
                        | '(' -> LPAREN
                        | ')' -> RPAREN
