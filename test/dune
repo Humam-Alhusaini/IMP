@@ -1,0 +1,4 @@
+(test
+ (name test)
+ (deps test.mdc)
+ (libraries Lang))

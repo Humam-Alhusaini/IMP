@@ -49,17 +49,18 @@ let rec interp_term (ctx : aexp_map) (term : term) : aexp_map  =
 
 and interp_ast (ctx : aexp_map) (ast : ast) : aexp_map =
   match ast with
-  | [] -> let _ = print_string "ended" in ctx
+  | [] -> ctx
   | hd :: ls -> let newctx = interp_term ctx hd in
                 interp_ast newctx ls;;
 
-let read str (ctx : aexp_map) : aexp_map =
+let read str (ctx : aexp_map) (debug : bool) : aexp_map =
   try
     let lex = Lexer.create str in
       let tokens = Lexer.tokenize lex [] in
         let ps = Parser.create tokens in
         let (_,ast) = Parser.parse ps [] EOF in
-          let _ =  print fast ast in
+          let _ = if debug then 
+            print fast ast in
             let newctx = interp_ast ctx ast in newctx
   with 
   | Lexing_error (err, toks, pos) -> 
