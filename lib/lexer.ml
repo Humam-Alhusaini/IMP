@@ -33,27 +33,20 @@ type token =
   | DEF
   | PRINT
 
-type cursor = {
-	mutable line_num : int; (*The line number*)
-	mutable bol_off : int; (*The offset between the cursor and the start of the line*)
-	mutable offset : int; (*The offset between the cursor and the start of the file*)
-};;
-
 type position = {
   line_num : int;
   bol_off : int;
   offset : int;
 };;
 
-let curs_to_pos (curs : cursor) : position =
-  {line_num = curs.line_num; bol_off = curs.bol_off; offset = curs.offset};;
-
-let pos_to_curs (pos : position) : cursor =
-  {line_num = pos.line_num; bol_off = pos.bol_off; offset = pos.offset};;
-
 type parseable_token = (token * position);;
 
-exception Lexing_error of string * token list * cursor;;
+type str_pos = {
+  txt : string;
+  curs : position;
+};;
+
+exception Lexing_error of string * token list * position;;
 
 open Printf
 
@@ -76,33 +69,36 @@ let string_to_tok str =
   | "not" -> NOT
   | _ -> VAR str;;
 
-type t = {
-  txt : string;
-  curs : cursor;
-};;
-
 let create str = { txt = str; curs = { line_num = 1; bol_off = 0; offset = 0 } };;
 
-let shiftr (lx : t) =
-  lx.curs.offset <- lx.curs.offset + 1;
-  lx.curs.bol_off <- lx.curs.bol_off + 1;;
+let shiftr pos : position =
+  { line_num = pos.line_num;
+    offset = pos.offset + 1;
+    bol_off = pos.bol_off + 1
+  };;
 
-let shiftl (lx : t) =
-  lx.curs.offset <- lx.curs.offset - 1;
-  lx.curs.bol_off <- lx.curs.bol_off - 1;;
+let shiftl pos =
+  { line_num = pos.line_num;
+    offset = pos.offset - 1;
+    bol_off = pos.bol_off - 1
+  };;
 
-let reset_bol_off (lx : t) =
-  lx.curs.bol_off <- 0;;
+let reset_bol_off pos =
+  { line_num = pos.line_num;
+    offset = pos.offset;
+    bol_off = 0
+  };;
 
-let new_line (lx : t) =
-  lx.curs.line_num <- lx.curs.line_num + 1;
-  reset_bol_off lx;
-  shiftr lx;;
+let new_line pos =
+  { line_num = pos.line_num + 1;
+    offset = pos.offset + 1;
+    bol_off = 1
+  };;
 
-let at_eof (lx : t) = lx.curs.offset >= String.length lx.txt;;
+let at_eof lx = lx.curs.offset >= String.length lx.txt;;
 
-let rec tokenize (lx : t) tokens =
-
+let rec tokenize lx : parseable_token list=
+  (*
   let tokenize_next toks = shiftr lx; tokenize lx toks in
 
   let tokenize_nline toks = new_line lx; tokenize lx toks in
@@ -162,18 +158,17 @@ let rec tokenize (lx : t) tokens =
     let (toks, _) = List.split tokens in
     Lexing_error ("< should either end with = or >, but it ended with EOF", toks, lx.curs) |> raise
 in
-
+*)
   if at_eof lx |> not then begin
     let char = lx.txt.[lx.curs.offset] in
     match char with
-    | ' ' | '\t' | '\r' -> tokenize_next tokens
-    | '\n' -> tokenize_nline tokens
-    | '\\' -> skip_comment (); tokenize_next tokens
-    | _ -> let pos = lx.curs |> curs_to_pos in
-           let t = match char with
-                       | 'a' .. 'z' | 'A' .. 'Z' ->  tokenize_word [char]
+    | ' ' | '\t' | '\r' -> {txt = lx.txt; curs = shiftr lx.curs} |> tokenize 
+    | '\n' -> {txt = lx.txt; curs = new_line lx.curs} |> tokenize
+(*  | '\\' -> skip_comment (); tokenize_next tokens*)
+    | _ -> let _ = match char with
+                       (*| 'a' .. 'z' | 'A' .. 'Z' ->  tokenize_word [char]
                        | '0' .. '9' -> tokenize_num [char]
-                       | '<' -> tokenize_symbol () (*Add an interp symbol function*)
+                       | '<' -> tokenize_symbol () (*Add an interp symbol function*)*)
                        | '+' -> PLUS
                        | '*' -> MULT
                        | '-' -> SUB
@@ -191,9 +186,8 @@ in
                        | '|' -> OR
                        | ',' -> COMMA
                        | '.' -> PERIOD
-                       | t -> let (toks, _) = List.split tokens in
-                            Lexing_error (sprintf "%c does not match any known char" t, toks, lx.curs) |> raise in
-                            let token = (t, pos) in
-                            tokenize_next (tokens @ [token]) end
+                       | t -> Lexing_error (sprintf "%c does not match any known char" t, [], lx.curs) |> raise in
+                             {txt = lx.txt; curs = shiftr lx.curs} |> tokenize 
+                          end
   else
-    tokens @ [(EOF, lx.curs |> curs_to_pos)]
+    [(EOF, lx.curs)]

@@ -55,7 +55,7 @@ and interp_ast ctx ast =
 
 let lex str =
   try 
-  let tokens = Lexer.tokenize (Lexer.create str) [] in tokens
+  let tokens = Lexer.tokenize (Lexer.create str) in tokens
   with 
   | Lexing_error (err, toks, pos) -> 
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;
