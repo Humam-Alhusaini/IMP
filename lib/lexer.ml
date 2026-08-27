@@ -136,26 +136,26 @@ let parse_char char pos : parseable_token =
       let token = NUM final_num in token;;
 *)
 
-let rec tokenize str pos : parseable_token list=
-  (*
-  (*This tokenizes numbers, it is initiated when the lexer finds a num*)
-  let rec tokenize_num chars =
-    shiftr lx;
-    if at_eof lx |> not then begin
-      let char = lx.txt.[lx.curs.offset] in
-      match char with
-      | 'a' .. 'z' | 'A' .. 'Z' ->
-          let (toks, _) = List.split tokens in
-          Lexing_error ("Can't end number with letter, add a space or something", toks, lx.curs) |> raise;
-      | '0' .. '9' -> chars @ [char] |> tokenize_num
-      | _ -> shiftl lx;
-            let final_num = chars |> string_of_chars |> int_of_string in
-            let token = NUM final_num in token end
-    else
-      let final_num = chars |> string_of_chars |> int_of_string in
-        let token = NUM final_num in token
-          in
+let rec charify_word lx pos =
+  if at_eof lx pos |> not then begin
+    let char = lx.[pos.offset] in
+    match char with
+    | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> char :: (shiftr pos |> charify_word lx)
+    | _ -> [] end
+  else [];;
 
+let rec charify_num lx pos : char list =
+  if at_eof lx pos |> not then begin
+    let char = lx.[pos.offset] in
+    match char with
+    | 'a' .. 'z' | 'A' .. 'Z' -> 
+      Lexing_error ("Can't end number with letter, add a space or something", pos) |> raise;
+    | '0' .. '9' -> char :: (shiftr pos |> charify_num lx)
+    | _ -> [] end
+    else [];;
+
+let rec tokenize str pos : parseable_token list =
+  (*
   let rec tokenize_word chars =
     shiftr lx;
     if at_eof lx |> not then begin
@@ -183,20 +183,15 @@ let rec tokenize str pos : parseable_token list=
 in
 *)
 
-let rec charify_num lx pos : char list =
-  if at_eof lx pos |> not then begin
-    let char = lx.[pos.offset] in
-    match char with
-    | 'a' .. 'z' | 'A' .. 'Z' -> 
-      Lexing_error ("Can't end number with letter, add a space or something", pos) |> raise;
-    | '0' .. '9' -> char :: (shiftr pos |> charify_num lx)
-    | _ -> [] end
-    else [] in
+let tokenize_word lx pos =
+  let chars = charify_word lx pos in
+  let str = chars |> string_of_chars in
+    (VAR str, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
 
 let tokenize_num lx pos =
   let chars = charify_num lx pos in
   let int = chars |> string_of_chars  |> int_of_string in
-    (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx)  in
+    (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
 
   let rec skip_comment lx pos =
     if at_eof lx pos |> not then begin
@@ -211,6 +206,7 @@ let tokenize_num lx pos =
     let char = str.[pos.offset] in
     match char with
     | '0' .. '9' -> tokenize_num str pos
+    | 'a' .. 'z' | 'A' .. 'Z' -> tokenize_word str pos
     | ' ' | '\t' | '\r' -> shiftr pos |> tokenize str 
     | '\n' -> new_line pos |> tokenize str
     | '\\' -> shiftr pos |> skip_comment str
