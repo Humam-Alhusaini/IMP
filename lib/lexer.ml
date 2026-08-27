@@ -104,9 +104,6 @@ let at_eof str pos = pos.offset >= String.length str;;
 
 let parse_char char pos : parseable_token = 
   let t = match char with
-     (*| 'a' .. 'z' | 'A' .. 'Z' ->  tokenize_word [char]
-     | '0' .. '9' -> tokenize_num [char]
-     | '<' -> tokenize_symbol () (*Add an interp symbol function*)*)
      | '+' -> PLUS
      | '*' -> MULT
      | '-' -> SUB
@@ -126,15 +123,6 @@ let parse_char char pos : parseable_token =
      | '.' -> PERIOD
      | errt -> Lexing_error (sprintf "%c does not match any known char" errt, pos) |> raise in
         (t, pos);;
-        (*t :: (shiftr pos |> tokenize str ) in*)
-
-(*
-          let final_num = chars |> string_of_chars |> int_of_string in
-          let token = NUM final_num in token end
-  else
-    let final_num = chars |> string_of_chars |> int_of_string in
-      let token = NUM final_num in token;;
-*)
 
 let rec charify_word lx pos =
   if at_eof lx pos |> not then begin
@@ -155,43 +143,25 @@ let rec charify_num lx pos : char list =
     else [];;
 
 let rec tokenize str pos : parseable_token list =
-  (*
-  let rec tokenize_word chars =
-    shiftr lx;
-    if at_eof lx |> not then begin
-      let char = lx.txt.[lx.curs.offset] in
+  let tokenize_symbol lx pos =
+    if at_eof lx pos |> not then begin
+      let char = lx.[pos.offset] in
       match char with
-      | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_' -> chars @ [char] |> tokenize_word
-      | _ -> shiftl lx; let token = chars |> string_of_chars |> string_to_tok in token end
-    else
-      let token = chars |> string_of_chars |> string_to_tok in token
-          in
-
-  let tokenize_symbol () =
-    shiftr lx;
-    if at_eof lx |> not then begin
-      let char = lx.txt.[lx.curs.offset] in
-      match char with
-      | '=' -> LE
-      | '>' -> NEQ
-      | _ ->
-          let (toks, _) = List.split tokens in
-        Lexing_error ("< should either end with = or >", toks, lx.curs) |> raise end
+      | '=' -> (LE, pos) :: (shiftr pos |> tokenize lx)
+      | '>' -> (NEQ, pos) :: (shiftr pos |> tokenize lx)
+      | _ -> Lexing_error ("< should either end with = or >", pos) |> raise end
   else 
-    let (toks, _) = List.split tokens in
-    Lexing_error ("< should either end with = or >, but it ended with EOF", toks, lx.curs) |> raise
-in
-*)
+    Lexing_error ("< should either end with = or >, but it ended with EOF", pos) |> raise in
 
-let tokenize_word lx pos =
-  let chars = charify_word lx pos in
-  let str = chars |> string_of_chars in
-    (VAR str, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
+  let tokenize_word lx pos =
+    let chars = charify_word lx pos in
+    let str = chars |> string_of_chars in
+      (VAR str, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
 
-let tokenize_num lx pos =
-  let chars = charify_num lx pos in
-  let int = chars |> string_of_chars  |> int_of_string in
-    (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
+  let tokenize_num lx pos =
+    let chars = charify_num lx pos in
+    let int = chars |> string_of_chars  |> int_of_string in
+      (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
 
   let rec skip_comment lx pos =
     if at_eof lx pos |> not then begin
@@ -207,6 +177,7 @@ let tokenize_num lx pos =
     match char with
     | '0' .. '9' -> tokenize_num str pos
     | 'a' .. 'z' | 'A' .. 'Z' -> tokenize_word str pos
+    | '<' -> shiftr pos |> tokenize_symbol str
     | ' ' | '\t' | '\r' -> shiftr pos |> tokenize str 
     | '\n' -> new_line pos |> tokenize str
     | '\\' -> shiftr pos |> skip_comment str
