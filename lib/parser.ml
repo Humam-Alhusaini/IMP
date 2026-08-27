@@ -2,7 +2,7 @@
 open Lexer
 open Printf
 
-let format_tok (tok : token) =
+let format_tok tok =
 match tok with
 | NUM i -> sprintf "NUM(%i)" i
 | VAR s -> sprintf "VAR(%s)" s
@@ -37,25 +37,25 @@ match tok with
 | PRINT -> "PRINT"
 | ELIF -> "ELIF";;
 
-let rec toks_to_tokens toks : token list =
+let rec toks_to_tokens toks =
 match toks with
 | [] -> []
 | (token, _) :: tl -> token :: toks_to_tokens tl;;
 
-let rec print_tokens toks : unit =
+let rec print_tokens toks =
 match toks with
 | [] -> ()
 | hd :: tl ->
     format_tok hd |> printf "%s\n";
   print_tokens tl;;
 
-let format_pos (pos : position) : string =
+let format_pos pos =
 sprintf "line %d, offset %d" pos.line_num pos.bol_off;;
 
-let format_token ((tok, pos) : parseable_token) : string =
+let format_token (tok, pos) =
   sprintf "%s at %s" (format_tok tok) (format_pos pos);;
 
-let error_of_token (err: string) (tok : parseable_token) : string =
+let error_of_token err tok =
 sprintf "%s, got %s" err (format_token tok);;
 
 exception Parsing_error of string * parseable_token
@@ -92,9 +92,9 @@ and ast = term list;;
 
 type toks = parseable_token list;;
 
-let create tokens : toks = tokens;;
+let create tokens = tokens;;
 
-let check_and_skip (ps : toks) (endtok : token) : toks =
+let check_and_skip ps endtok =
   match ps with
   | [] -> Fatal "No tokens to parse" |> raise
   | (ftok, p) :: ls -> if endtok = ftok then
@@ -102,9 +102,9 @@ let check_and_skip (ps : toks) (endtok : token) : toks =
                       else
                         Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
 
-let parse_aexp (ps : toks) : toks * aexp =
+let parse_aexp ps =
 
-  let rec parse_binop (ps : toks) (curr : aexp) : toks * aexp =
+  let rec parse_binop ps curr =
     match ps with
     | (MULT, p) :: (NUM y, _) :: ls -> parse_binop ls (Amult (curr, Num y))
     | (PLUS, p) :: (NUM y, _) :: ls -> parse_binop ls (Aplus (curr, Num y))
@@ -122,13 +122,13 @@ let parse_aexp (ps : toks) : toks * aexp =
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 
-let parse_bool ((tok, pos) : parseable_token) : bexp =
+let parse_bool (tok, pos) =
   match tok with
   | TRUE -> True
   | FALSE -> False
   | _ -> Parsing_error ("Expected bool", (tok, pos)) |> raise
 
-let parse_bexp (ps : toks) : toks * bexp =
+let parse_bexp ps =
   (*
   let rec parse_binop (ps : toks) (curr : bexp) : toks * bexp =
     match ps with
@@ -142,13 +142,13 @@ let parse_bexp (ps : toks) : toks * bexp =
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 
-let rec parse_nested (ps : toks) : toks * ast =
+let rec parse_nested ps =
   match ps with
   | (LBRACE, _) :: ls -> parse ls [] RBRACE
   | hd :: _ -> Parsing_error("Expected { for nested", hd) |> raise
   | [] -> Fatal "Major Error in Nested CF Parsing" |> raise
 
-and parse_def (ps : toks) : toks * term =
+and parse_def ps =
   match ps with
   | (VAR str, _) :: (EQ, _) :: ls  -> let (ps, aexp) = parse_aexp ls in
                                                 let term = Def (str, aexp) in (ps, term)
@@ -156,13 +156,13 @@ and parse_def (ps : toks) : toks * term =
   | tok :: _ -> Parsing_error ("Missing var", tok) |> raise
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
-and parse_if (ps : toks) : toks * term =
+and parse_if ps =
   let (ps, cond) = parse_bexp ps in
   let ps = check_and_skip ps THEN in
     let (ps, nested_term) = parse_nested ps in
       let term = If (cond, nested_term) in (ps, term)
 
-and parse_elif (ps : toks) : toks * term =
+and parse_elif ps =
   let (ps, cond) = parse_bexp ps in 
   let ps = check_and_skip ps THEN in
   let (ps, term1) = parse_nested ps in
@@ -170,11 +170,11 @@ and parse_elif (ps : toks) : toks * term =
   let (ps, term2) = parse_nested ps in
         let term = Elif (cond, term1, term2) in (ps, term)
 
-and parse_ret (ps : toks) : toks * term =
+and parse_ret ps =
   let (ps, aexp) = parse_aexp ps in
   let term = Print aexp in (ps, term)
 
-and parse_term (ps : toks) : toks * term =
+and parse_term ps =
   let (ps, term) = 
     match ps with
   | (DEF, _) :: ls -> parse_def ls
@@ -188,7 +188,7 @@ and parse_term (ps : toks) : toks * term =
     | hd :: ls -> Parsing_error ("Expected Semicolon", hd) |> raise
     | [] -> Fatal "No tokens to parse" |> raise
 
-and parse (ps : toks) (ast : ast) (endtok : token) : toks * ast =
+and parse ps ast endtok =
     let (toks, term) = parse_term ps in
     match toks with
     | [] -> Fatal "Didn't encounter EOF token, probably a lexer issue" |> raise

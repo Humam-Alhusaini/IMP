@@ -5,7 +5,7 @@ open Ctx
 
 open Printf
 
-let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
+let rec simplify_aexp ctx aexp =
   match aexp with
   | Aplus (aexp1, aexp2) -> simplify_aexp ctx aexp1 + simplify_aexp ctx aexp2
   | Asub (aexp1, aexp2) -> simplify_aexp ctx aexp1 - simplify_aexp ctx aexp2
@@ -13,7 +13,7 @@ let rec simplify_aexp (ctx : aexp_map) (aexp : aexp) : int =
   | Num y -> y
   | Var str -> simplify_aexp ctx (find str ctx);;
 
-let rec simplify_bexp (ctx : aexp_map) (bexp : bexp) : bool =
+let rec simplify_bexp ctx bexp =
   match bexp with
   | True -> true
   | False -> false
@@ -25,7 +25,7 @@ let rec simplify_bexp (ctx : aexp_map) (bexp : bexp) : bool =
   | BLe (aexp1, aexp2) -> simplify_aexp ctx aexp1 <= simplify_aexp ctx aexp2
   | BGt (aexp1, aexp2) -> simplify_aexp ctx aexp1 > simplify_aexp ctx aexp2
 
-let rec simplify_term (ctx : aexp_map) (term : term) : ast  =
+let rec simplify_term ctx term =
   match term with
   | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else [Nop]
   | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
@@ -33,12 +33,12 @@ let rec simplify_term (ctx : aexp_map) (term : term) : ast  =
   | Print aexp -> [Print (Num (simplify_aexp ctx aexp))] 
   | Nop -> [Nop]
 
-and simplify_ast (ctx : aexp_map) (ast : ast) : ast =
+and simplify_ast ctx ast =
   match ast with
   | [] -> []
   | hd :: ls -> let ast = simplify_term ctx hd in ast @ simplify_ast ctx ls;;
 
-let rec interp_term (ctx : aexp_map) (term : term) : aexp_map  =
+let rec interp_term ctx term =
   match term with
   | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else ctx
   | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else (interp_ast ctx ast2)
@@ -47,7 +47,7 @@ let rec interp_term (ctx : aexp_map) (term : term) : aexp_map  =
   | Def (str, aexp) -> let newaexp = Num (simplify_aexp ctx aexp) in
                         add str newaexp ctx
 
-and interp_ast (ctx : aexp_map) (ast : ast) : aexp_map =
+and interp_ast ctx ast =
   match ast with
   | [] -> ctx
   | hd :: ls -> let newctx = interp_term ctx hd in
@@ -76,11 +76,11 @@ let parse toks debug =
     printf "\n"; printf "PARSING ERROR: %s, got %s\n" err (format_token tok); []
   | err -> printf "\n";  Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n"; [];;
 
-let read str ctx debug : aexp_map =
+let read str ctx debug =
   try
     let tokens = lex str in
     let ast = parse tokens debug in
-    let newctx = interp_ast ctx ast in newctx
+    interp_ast ctx ast
   with 
   | Map_error err -> printf "\n"; printf "Value %s does not exist in context\n" err; ctx
   | err -> printf "\n";  Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n"; ctx;;

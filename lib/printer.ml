@@ -27,12 +27,12 @@ let rec fbexp bexp =
   | BGt (aexp1, aexp2) -> sprintf "%s <> %s" (faexp aexp1) (faexp aexp2)
 ;;
 
-let rec fmap (map : aexp_map) : string =
+let rec fmap map =
   match map with 
   | Empty -> ""
   | Elem (key, aexp, map') -> sprintf "%s -> %s\n%s" key (faexp aexp) (fmap map');;
 
-let rec fdef ((name, aexp) : def) = 
+let rec fdef (name, aexp) = 
   sprintf "Def %s = %s" name (faexp aexp)
 
 let rec fterm term = 

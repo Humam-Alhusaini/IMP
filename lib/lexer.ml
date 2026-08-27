@@ -62,7 +62,7 @@ let string_of_chars chars =
   List.iter (Buffer.add_char buf) chars;
   Buffer.contents buf;;
 
-let string_to_tok str : token =
+let string_to_tok str =
   match str with
   | "if" -> IF
   | "then" -> THEN
@@ -81,7 +81,7 @@ type t = {
   curs : cursor;
 };;
 
-let create str : t = { txt = str; curs = { line_num = 1; bol_off = 0; offset = 0 } };;
+let create str = { txt = str; curs = { line_num = 1; bol_off = 0; offset = 0 } };;
 
 let shiftr (lx : t) =
   lx.curs.offset <- lx.curs.offset + 1;
@@ -99,16 +99,16 @@ let new_line (lx : t) =
   reset_bol_off lx;
   shiftr lx;;
 
-let at_eof (lx : t) : bool = lx.curs.offset >= String.length lx.txt;;
+let at_eof (lx : t) = lx.curs.offset >= String.length lx.txt;;
 
-let rec tokenize (lx : t) (tokens : parseable_token list) : parseable_token list =
+let rec tokenize (lx : t) tokens =
 
   let tokenize_next toks = shiftr lx; tokenize lx toks in
 
   let tokenize_nline toks = new_line lx; tokenize lx toks in
 
   (*This tokenizes numbers, it is initiated when the lexer finds a num*)
-  let rec tokenize_num (chars : char list) =
+  let rec tokenize_num chars =
     shiftr lx;
     if at_eof lx |> not then begin
       let char = lx.txt.[lx.curs.offset] in
@@ -125,7 +125,7 @@ let rec tokenize (lx : t) (tokens : parseable_token list) : parseable_token list
         let token = NUM final_num in token
           in
 
-  let rec tokenize_word (chars : char list) : token =
+  let rec tokenize_word chars =
     shiftr lx;
     if at_eof lx |> not then begin
       let char = lx.txt.[lx.curs.offset] in
@@ -136,7 +136,7 @@ let rec tokenize (lx : t) (tokens : parseable_token list) : parseable_token list
       let token = chars |> string_of_chars |> string_to_tok in token
           in
 
-  let rec skip_comment () : unit =
+  let rec skip_comment () =
     shiftr lx;
     if at_eof lx |> not then begin
       let char = lx.txt.[lx.curs.offset] in
@@ -148,7 +148,7 @@ let rec tokenize (lx : t) (tokens : parseable_token list) : parseable_token list
     let (toks, _) = List.split tokens in
       Lexing_error ("Forgot to close comment", toks, lx.curs) |> raise in
   
-  let tokenize_symbol () : token = 
+  let tokenize_symbol () =
     shiftr lx;
     if at_eof lx |> not then begin
       let char = lx.txt.[lx.curs.offset] in
