@@ -39,14 +39,15 @@ type position = {
   offset : int;
 };;
 
+let start_pos = {
+  line_num = 1;
+  bol_off = 0;
+  offset = 0
+}
+
 type parseable_token = (token * position);;
 
-type str_pos = {
-  txt : string;
-  curs : position;
-};;
-
-exception Lexing_error of string * token list * position;;
+exception Lexing_error of string * position;;
 
 open Printf
 
@@ -68,8 +69,6 @@ let string_to_tok str =
   | "print" -> PRINT
   | "not" -> NOT
   | _ -> VAR str;;
-
-let create str = { txt = str; curs = { line_num = 1; bol_off = 0; offset = 0 } };;
 
 let shiftr pos : position =
   { line_num = pos.line_num;
@@ -95,14 +94,36 @@ let new_line pos =
     bol_off = 1
   };;
 
-let at_eof lx = lx.curs.offset >= String.length lx.txt;;
+let at_eof str pos = pos.offset >= String.length str;;
 
-let rec tokenize lx : parseable_token list=
+let parse_char char pos : parseable_token = 
+  let t = match char with
+     (*| 'a' .. 'z' | 'A' .. 'Z' ->  tokenize_word [char]
+     | '0' .. '9' -> tokenize_num [char]
+     | '<' -> tokenize_symbol () (*Add an interp symbol function*)*)
+     | '+' -> PLUS
+     | '*' -> MULT
+     | '-' -> SUB
+     | '=' -> EQ
+     | '>' -> GT
+     | '(' -> LPAREN
+     | ')' -> RPAREN
+     | '{' -> LBRACE
+     | '}' -> RBRACE
+     | '[' -> LBRACK
+     | ']' -> RBRACK
+     | ';' -> SEMICOLON
+     | ':' -> COLON
+     | '&' -> AND
+     | '|' -> OR
+     | ',' -> COMMA
+     | '.' -> PERIOD
+     | errt -> Lexing_error (sprintf "%c does not match any known char" errt, pos) |> raise in
+        (t, pos);;
+        (*t :: (shiftr pos |> tokenize str ) in*)
+
+let rec tokenize str pos : parseable_token list=
   (*
-  let tokenize_next toks = shiftr lx; tokenize lx toks in
-
-  let tokenize_nline toks = new_line lx; tokenize lx toks in
-
   (*This tokenizes numbers, it is initiated when the lexer finds a num*)
   let rec tokenize_num chars =
     shiftr lx;
@@ -159,35 +180,13 @@ let rec tokenize lx : parseable_token list=
     Lexing_error ("< should either end with = or >, but it ended with EOF", toks, lx.curs) |> raise
 in
 *)
-  if at_eof lx |> not then begin
-    let char = lx.txt.[lx.curs.offset] in
+  if at_eof str pos |> not then begin
+    let char = str.[pos.offset] in
     match char with
-    | ' ' | '\t' | '\r' -> {txt = lx.txt; curs = shiftr lx.curs} |> tokenize 
-    | '\n' -> {txt = lx.txt; curs = new_line lx.curs} |> tokenize
+    | ' ' | '\t' | '\r' -> shiftr pos |> tokenize str 
+    | '\n' -> new_line pos |> tokenize str
 (*  | '\\' -> skip_comment (); tokenize_next tokens*)
-    | _ -> let _ = match char with
-                       (*| 'a' .. 'z' | 'A' .. 'Z' ->  tokenize_word [char]
-                       | '0' .. '9' -> tokenize_num [char]
-                       | '<' -> tokenize_symbol () (*Add an interp symbol function*)*)
-                       | '+' -> PLUS
-                       | '*' -> MULT
-                       | '-' -> SUB
-                       | '=' -> EQ
-                       | '>' -> GT
-                       | '(' -> LPAREN
-                       | ')' -> RPAREN
-                       | '{' -> LBRACE
-                       | '}' -> RBRACE
-                       | '[' -> LBRACK
-                       | ']' -> RBRACK
-                       | ';' -> SEMICOLON
-                       | ':' -> COLON
-                       | '&' -> AND
-                       | '|' -> OR
-                       | ',' -> COMMA
-                       | '.' -> PERIOD
-                       | t -> Lexing_error (sprintf "%c does not match any known char" t, [], lx.curs) |> raise in
-                             {txt = lx.txt; curs = shiftr lx.curs} |> tokenize 
-                          end
+    | char -> parse_char char pos :: (shiftr pos |> tokenize str)
+    end
   else
-    [(EOF, lx.curs)]
+    [(EOF, pos)];;

@@ -55,12 +55,12 @@ and interp_ast ctx ast =
 
 let lex str =
   try 
-  let tokens = Lexer.tokenize (Lexer.create str) in tokens
+  let tokens = Lexer.start_pos |> Lexer.tokenize str in tokens
   with 
-  | Lexing_error (err, toks, pos) -> 
+  | Lexing_error (err, pos) -> 
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;
       print_string "Printing retrieved tokens...\n\n";
-      print_tokens toks; []
+      (*print_tokens toks;*) []
   | err -> printf "\n";  Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n"; [];;
 
 
