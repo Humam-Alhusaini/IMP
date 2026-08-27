@@ -7,14 +7,14 @@ let rec repl ctx =
   print_string ">>> ";
   let txt = read_line () in
   match txt with
-  | "exit" -> print_endline "Goodbye!"
-  | "pctx" -> print_endline (fmap ctx); ()
-  | _ -> Interp.lex txt |> Printer.print_ptokens
+  | "exit" -> print_endline "Goodbye!"; ctx
+  | "pctx" -> print_endline (fmap ctx); ctx
+  | _ -> read txt ctx false
 
 let () = 
   if Array.length Sys.argv <> 1 then
     let str = Array.get Sys.argv 1 |> open_bin |> input_all in 
-    let _ = read str Empty false in () 
+    let _ = read str Empty false in ()
   else
-  repl Empty
+  let _ = repl Empty in ()
 ;;

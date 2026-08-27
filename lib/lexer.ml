@@ -155,7 +155,7 @@ else
 and tokenize_word lx pos =
   let chars = charify_word lx pos in
   let str = chars |> string_of_chars in
-    (VAR str, pos) :: (List.length chars |> shiftrn pos |> tokenize lx)
+    (string_to_tok str, pos) :: (List.length chars |> shiftrn pos |> tokenize lx)
 
 and tokenize_num lx pos =
   let chars = charify_num lx pos in
