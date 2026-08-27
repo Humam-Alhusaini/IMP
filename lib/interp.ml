@@ -53,21 +53,35 @@ and interp_ast (ctx : aexp_map) (ast : ast) : aexp_map =
   | hd :: ls -> let newctx = interp_term ctx hd in
                 interp_ast newctx ls;;
 
-let read str (ctx : aexp_map) (debug : bool) : aexp_map =
-  try
-    let lex = Lexer.create str in
-      let tokens = Lexer.tokenize lex [] in
-        let ps = Parser.create tokens in
-        let (_,ast) = Parser.parse ps [] EOF in
-          if debug then
-            fast ast |> printf "%s\n";
-          let newctx = interp_ast ctx ast in newctx
+let lex str =
+  try 
+  let tokens = Lexer.tokenize (Lexer.create str) [] in tokens
   with 
   | Lexing_error (err, toks, pos) -> 
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;
       print_string "Printing retrieved tokens...\n\n";
-      print_tokens toks; ctx
-  | Parsing_error (err, tok) -> printf "\n"; printf "PARSING ERROR: %s, got %s\n" err (format_token tok); ctx
+      print_tokens toks; []
+  | err -> printf "\n";  Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n"; [];;
+
+
+let parse toks debug =
+  try 
+    let (_,ast) = Parser.parse (Parser.create toks) [] EOF in
+    if debug then
+      fast ast |> printf "%s\n";
+    ast
+  with 
+  | Fatal err -> printf "\n"; printf "CONTACT MAINTAINERS: %s\n" err; []
+  | Parsing_error (err, tok) -> 
+    printf "\n"; printf "PARSING ERROR: %s, got %s\n" err (format_token tok); []
+  | err -> printf "\n";  Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n"; [];;
+
+let read str ctx debug : aexp_map =
+  try
+    let tokens = lex str in
+    let ast = parse tokens debug in
+    let newctx = interp_ast ctx ast in newctx
+  with 
   | Map_error err -> printf "\n"; printf "Value %s does not exist in context\n" err; ctx
-  | Fatal err -> printf "\n"; printf "CONTACT MAINTAINERS: %s\n" err; ctx;;
+  | err -> printf "\n";  Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n"; ctx;;
 
