@@ -73,7 +73,7 @@ let parse toks debug =
   with 
   | Fatal err -> printf "\n"; printf "CONTACT MAINTAINERS: %s\n" err; []
   | Parsing_error (err, tok) -> 
-    printf "\n"; printf "PARSING ERROR: %s, got %s\n" err (format_token tok); []
+    printf "\n"; printf "PARSING ERROR: %s, got %s\n" err (format_ptoken tok); []
   | err -> printf "\n";  Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n"; [];;
 
 let read str ctx debug =

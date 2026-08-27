@@ -2,6 +2,7 @@
 open Lexer
 open Printf
 
+(*
 let format_tok tok =
 match tok with
 | NUM i -> sprintf "NUM(%i)" i
@@ -49,7 +50,7 @@ match toks with
     format_tok hd |> printf "%s\n";
   print_tokens tl;;
 
-let format_pos pos =
+  let format_pos pos =
 sprintf "line %d, offset %d" pos.line_num pos.bol_off;;
 
 let format_token (tok, pos) =
@@ -57,7 +58,7 @@ let format_token (tok, pos) =
 
 let error_of_token err tok =
 sprintf "%s, got %s" err (format_token tok);;
-
+*)
 exception Parsing_error of string * parseable_token
 exception Fatal of string
 

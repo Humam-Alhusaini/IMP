@@ -153,18 +153,6 @@ let rec tokenize str pos : parseable_token list=
       let token = chars |> string_of_chars |> string_to_tok in token
           in
 
-  let rec skip_comment () =
-    shiftr lx;
-    if at_eof lx |> not then begin
-      let char = lx.txt.[lx.curs.offset] in
-      match char with
-      | '\\' -> ()
-      | _ -> skip_comment ()
-    end
-    else
-    let (toks, _) = List.split tokens in
-      Lexing_error ("Forgot to close comment", toks, lx.curs) |> raise in
-  
   let tokenize_symbol () =
     shiftr lx;
     if at_eof lx |> not then begin
@@ -180,12 +168,22 @@ let rec tokenize str pos : parseable_token list=
     Lexing_error ("< should either end with = or >, but it ended with EOF", toks, lx.curs) |> raise
 in
 *)
+
+  let rec skip_comment lx pos =
+    if at_eof lx pos |> not then begin
+      let char = str.[pos.offset] in
+      match char with
+      | '\\' -> shiftr pos |> tokenize lx
+      | _ -> shiftr pos |> skip_comment lx
+    end
+  else Lexing_error ("Forgot to close comment", pos) |> raise in
+  
   if at_eof str pos |> not then begin
     let char = str.[pos.offset] in
     match char with
     | ' ' | '\t' | '\r' -> shiftr pos |> tokenize str 
     | '\n' -> new_line pos |> tokenize str
-(*  | '\\' -> skip_comment (); tokenize_next tokens*)
+    | '\\' -> shiftr pos |> skip_comment str
     | char -> parse_char char pos :: (shiftr pos |> tokenize str)
     end
   else

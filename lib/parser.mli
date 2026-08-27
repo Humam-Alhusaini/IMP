@@ -33,13 +33,14 @@ type toks = parseable_token list
 
 exception Parsing_error of string * parseable_token
 exception Fatal of string
-
+(*
 val format_tok : token -> string
 val toks_to_tokens : toks -> token list
 val print_tokens : token list -> unit
 val format_pos : position -> string
 val format_token : parseable_token -> string
 val error_of_token : string -> parseable_token -> string
+*)
 val create : toks -> toks
 val check_and_skip : toks -> token -> toks
 val parse_aexp : toks -> toks * aexp

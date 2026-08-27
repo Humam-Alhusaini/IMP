@@ -1,6 +1,7 @@
 
 open Printf
 open Parser
+open Lexer
 open Ctx
 
 let rec faexp aexp = 
@@ -48,3 +49,65 @@ and fast ast =
   | hd :: ls -> sprintf "%s; %s" (fterm hd) (fast ls)
   | [] -> ""
 
+let format_tok tok =
+match tok with
+| NUM i -> sprintf "NUM(%i)" i
+| VAR s -> sprintf "VAR(%s)" s
+| MULT -> "MULT"
+| PLUS -> "PLUS"
+| SUB -> "SUB"
+| EQ -> "EQ"
+| NEQ -> "NEQ"
+| NOT -> "NOT"
+| GT -> "GT"
+| LE -> "LE"
+| LPAREN -> "LPAREN"
+| RPAREN -> "RPAREN"
+| LBRACE -> "LBRACE"
+| RBRACE -> "RBRACE"
+| LBRACK -> "LBRACK"
+| RBRACK -> "RBRACK"
+| SEMICOLON -> "SEMICOLON"
+| COLON -> "COLON"
+| AND -> "AND"
+| OR -> "OR"
+| IF -> "IF"
+| ELSE -> "ELSE"
+| TRUE -> "TRUE"
+| FALSE -> "FALSE"
+| COMMA -> "COMMA"
+| PERIOD -> "PERIOD"
+| NAT -> "NAT"
+| THEN -> "THEN"
+| EOF -> "EOF"
+| DEF -> "DEF"
+| PRINT -> "PRINT"
+| ELIF -> "ELIF";;
+
+let rec toks_to_tokens toks =
+match toks with
+| [] -> []
+| (token, _) :: tl -> token :: toks_to_tokens tl;;
+
+let rec print_tokens toks =
+match toks with
+| [] -> ()
+| hd :: tl ->
+    format_tok hd |> printf "%s\n";
+  print_tokens tl;;
+
+let format_pos pos =
+  sprintf "line %d, offset %d" pos.line_num pos.bol_off;;
+
+let format_ptoken (tok, pos) =
+  sprintf "%s at %s" (format_tok tok) (format_pos pos);;
+
+let rec print_ptokens ptokens = 
+  match ptokens with
+  | [] -> ()
+  | hd :: tl ->
+    format_ptoken hd |> printf "%s\n";
+    print_ptokens tl;;
+
+let error_of_token err tok =
+sprintf "%s, got %s" err (format_ptoken tok);;
