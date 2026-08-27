@@ -76,6 +76,12 @@ let shiftr pos : position =
     bol_off = pos.bol_off + 1
   };;
 
+let shiftrn pos n : position =
+  { line_num = pos.line_num;
+    offset = pos.offset + n;
+    bol_off = pos.bol_off + n
+  };;
+
 let shiftl pos =
   { line_num = pos.line_num;
     offset = pos.offset - 1;
@@ -121,6 +127,14 @@ let parse_char char pos : parseable_token =
      | errt -> Lexing_error (sprintf "%c does not match any known char" errt, pos) |> raise in
         (t, pos);;
         (*t :: (shiftr pos |> tokenize str ) in*)
+
+(*
+          let final_num = chars |> string_of_chars |> int_of_string in
+          let token = NUM final_num in token end
+  else
+    let final_num = chars |> string_of_chars |> int_of_string in
+      let token = NUM final_num in token;;
+*)
 
 let rec tokenize str pos : parseable_token list=
   (*
@@ -169,6 +183,21 @@ let rec tokenize str pos : parseable_token list=
 in
 *)
 
+let rec charify_num lx pos : char list =
+  if at_eof lx pos |> not then begin
+    let char = lx.[pos.offset] in
+    match char with
+    | 'a' .. 'z' | 'A' .. 'Z' -> 
+      Lexing_error ("Can't end number with letter, add a space or something", pos) |> raise;
+    | '0' .. '9' -> char :: (shiftr pos |> charify_num lx)
+    | _ -> [] end
+    else [] in
+
+let tokenize_num lx pos =
+  let chars = charify_num lx pos in
+  let int = chars |> string_of_chars  |> int_of_string in
+    (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx)  in
+
   let rec skip_comment lx pos =
     if at_eof lx pos |> not then begin
       let char = str.[pos.offset] in
@@ -181,6 +210,7 @@ in
   if at_eof str pos |> not then begin
     let char = str.[pos.offset] in
     match char with
+    | '0' .. '9' -> tokenize_num str pos
     | ' ' | '\t' | '\r' -> shiftr pos |> tokenize str 
     | '\n' -> new_line pos |> tokenize str
     | '\\' -> shiftr pos |> skip_comment str
