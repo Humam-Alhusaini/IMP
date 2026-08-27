@@ -48,6 +48,3 @@ and fast ast =
   | hd :: ls -> sprintf "%s; %s" (fterm hd) (fast ls)
   | [] -> ""
 
-let print (func : 'a -> string) (obj : 'a) =
-  let str = func obj in
-  printf "%s\n" str;;

@@ -42,7 +42,7 @@ let rec interp_term (ctx : aexp_map) (term : term) : aexp_map  =
   match term with
   | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else ctx
   | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else (interp_ast ctx ast2)
-  | Print aexp -> Num (simplify_aexp ctx aexp) |> print faexp; ctx 
+  | Print aexp -> Num (simplify_aexp ctx aexp) |> faexp |> printf "%s\n"; ctx 
   | Nop -> ctx
   | Def (str, aexp) -> let newaexp = Num (simplify_aexp ctx aexp) in
                         add str newaexp ctx
@@ -59,9 +59,9 @@ let read str (ctx : aexp_map) (debug : bool) : aexp_map =
       let tokens = Lexer.tokenize lex [] in
         let ps = Parser.create tokens in
         let (_,ast) = Parser.parse ps [] EOF in
-          let _ = if debug then 
-            print fast ast in
-            let newctx = interp_ast ctx ast in newctx
+          if debug then
+            fast ast |> printf "%s\n";
+          let newctx = interp_ast ctx ast in newctx
   with 
   | Lexing_error (err, toks, pos) -> 
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;
