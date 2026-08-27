@@ -142,36 +142,36 @@ let rec charify_num lx pos : char list =
     | _ -> [] end
     else [];;
 
-let rec tokenize str pos : parseable_token list =
-  let tokenize_symbol lx pos =
-    if at_eof lx pos |> not then begin
-      let char = lx.[pos.offset] in
-      match char with
-      | '=' -> (LE, pos) :: (shiftr pos |> tokenize lx)
-      | '>' -> (NEQ, pos) :: (shiftr pos |> tokenize lx)
-      | _ -> Lexing_error ("< should either end with = or >", pos) |> raise end
-  else 
-    Lexing_error ("< should either end with = or >, but it ended with EOF", pos) |> raise in
+let rec tokenize_symbol lx pos =
+  if at_eof lx pos |> not then begin
+    let char = lx.[pos.offset] in
+    match char with
+    | '=' -> (LE, pos) :: (shiftr pos |> tokenize lx)
+    | '>' -> (NEQ, pos) :: (shiftr pos |> tokenize lx)
+    | _ -> Lexing_error ("< should either end with = or >", pos) |> raise end
+else 
+  Lexing_error ("< should either end with = or >, but it ended with EOF", pos) |> raise
 
-  let tokenize_word lx pos =
-    let chars = charify_word lx pos in
-    let str = chars |> string_of_chars in
-      (VAR str, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
+and tokenize_word lx pos =
+  let chars = charify_word lx pos in
+  let str = chars |> string_of_chars in
+    (VAR str, pos) :: (List.length chars |> shiftrn pos |> tokenize lx)
 
-  let tokenize_num lx pos =
-    let chars = charify_num lx pos in
-    let int = chars |> string_of_chars  |> int_of_string in
-      (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx) in
+and tokenize_num lx pos =
+  let chars = charify_num lx pos in
+  let int = chars |> string_of_chars  |> int_of_string in
+    (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx)
 
-  let rec skip_comment lx pos =
-    if at_eof lx pos |> not then begin
-      let char = str.[pos.offset] in
-      match char with
-      | '\\' -> shiftr pos |> tokenize lx
-      | _ -> shiftr pos |> skip_comment lx
-    end
-  else Lexing_error ("Forgot to close comment", pos) |> raise in
-  
+and skip_comment lx pos =
+  if at_eof lx pos |> not then begin
+    let char = lx.[pos.offset] in
+    match char with
+    | '\\' -> shiftr pos |> tokenize lx
+    | _ -> shiftr pos |> skip_comment lx
+  end
+else Lexing_error ("Forgot to close comment", pos) |> raise
+
+and tokenize str pos : parseable_token list =
   if at_eof str pos |> not then begin
     let char = str.[pos.offset] in
     match char with
