@@ -43,9 +43,9 @@ let rec fdef (name, aexp) =
 let rec fterm term = 
   match term with 
   | Def d -> fdef d
-  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n { %s }\n  else\n { %s };\n" (fbexp cond) (fast ast1) (fast ast2)
-  | If (cond, ast) -> sprintf "If (%s) then\n { %s };\n" (fbexp cond) (fast ast)
-  | Print aexp -> faexp aexp |> sprintf "Print (%s)"
+  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n {\n %s }\n  else\n {\n %s }\n" (fbexp cond) (fast ast1) (fast ast2)
+  | If (cond, ast) -> sprintf "If (%s) then\n {\n %s }\n" (fbexp cond) (fast ast)
+  | Print aexp -> faexp aexp |> sprintf "Print (%s);\n"
   | Nop -> "Nop"
 
 and fast ast = 
