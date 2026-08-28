@@ -9,8 +9,8 @@ type aexp =
 type bexp =
   | True
   | False
-  | And of bexp * bexp
-  | Or of bexp * bexp
+  | And of bexp * bool
+  | Or of bexp * bool
   | Not of bexp
   | BEq of aexp * aexp
   | BNeq of aexp * aexp

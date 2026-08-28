@@ -14,8 +14,8 @@ type aexp =
 and bexp = 
   | True
   | False
-  | And of bexp * bexp
-  | Or of bexp * bexp
+  | And of bexp * bool 
+  | Or of bexp * bool
   | Not of bexp
   | BEq of aexp * aexp
   | BNeq of aexp * aexp
@@ -56,6 +56,7 @@ let parse_aexp ps =
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
   match ps with
   | (LPAREN, _) :: (LIT lit, _) :: ls -> parse_binop ls (ALit lit)
+  | (LIT lit, _) :: ls -> (ls, ALit lit)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 (*
@@ -68,16 +69,15 @@ let parse_bool (tok, pos) =
 
 let parse_bexp ps =
   (*
-  let rec parse_binop (ps : toks) (curr : bexp) : toks * bexp =
+  let rec parse_bexp (ps : toks) (curr : bexp) : toks * bexp =
     match ps with
-    | ((AND | OR | EQ | NEQ) as op, p) :: num :: ls -> ()
+    | (NOT, _) :: ls -> ()
     | [] -> Fatal "Token ended before finding end token" |> raise
     | (RPAREN, _) :: ls -> (ls, curr)
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
     *)
   match ps with
-  | (LPAREN, _) :: (TRUE, _ ) :: (RPAREN, _) :: ls  -> (ls, True)
-  | (LPAREN, _) :: (FALSE, _ ) :: (RPAREN, _) :: ls  -> (ls, False)
+  | (LPAREN, _) :: ls  -> (ls, True)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 
