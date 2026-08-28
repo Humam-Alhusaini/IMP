@@ -1,9 +1,9 @@
-def x = (0);
+def x = 0;
 
-elif (false) then 
-{ print(x); }
+elif (false | true) then 
+{ def x = 0; }
 else 
-{ print(5); };
+{ print 5; };
 
-if true then 
-{ def y = 2; print y;};
+if (true & true) then 
+{ def y = 2; print x; print y; };

@@ -58,26 +58,19 @@ let parse_aexp ps =
   | (LIT lit, _) :: ls -> (ls, ALit lit)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
-(*
-let parse_bool (tok, pos) =
-  match tok with
-  | TRUE -> True
-  | FALSE -> False
-  | _ -> Parsing_error ("Expected bool", (tok, pos)) |> raise
-*)
-
-let tok_to_bool = function
-  | `TRUE -> true 
-  | `FALSE ->  false;;
 
 let rec parse_bexp ps =
-  let rec parse_bexp_in (ps : toks) (curr : bexp) : toks * bexp =
+
+  let rec parse_binop (ps : toks) (curr : bexp) : toks * bexp =
     match ps with
+    | (AND, p) :: (BOOL b, _) :: ls -> parse_binop ls (And (curr, b))
+    | (OR, p) :: (BOOL b, _) :: ls -> parse_binop ls (Or (curr, b))
     | (RPAREN, _) :: ls -> (ls, curr)
     | [] -> Fatal "Token ended before finding end token" |> raise
-    | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
+    | hd :: _ -> Parsing_error ("Expected bexpession to either end or continue", hd) |> raise in
+
   match ps with
-  | (LPAREN, _) :: (BOOL bye, _) :: ls -> Bool bye |> parse_bexp_in ls 
+  | (LPAREN, _) :: (BOOL bye, _) :: ls -> Bool bye |> parse_binop ls 
   | (LPAREN, _) :: (NOT, _) :: ls  -> let (toks, b) = parse_bexp ls in (toks, Not b)
   | (BOOL b, _) :: ls  -> (ls, Bool b)
   | [] -> Fatal "No tokens to parse" |> raise
