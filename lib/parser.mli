@@ -47,6 +47,6 @@ val parse_nested : toks -> toks * ast
 val parse_def : toks -> toks * term
 val parse_if : toks -> toks * term
 val parse_elif : toks -> toks * term
-val parse_ret : toks -> toks * term
+val parse_print : toks -> toks * term
 val parse_term : toks -> toks * term
 val parse : toks -> ast -> token -> toks * ast
