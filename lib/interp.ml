@@ -30,10 +30,11 @@ let rec simplify_bexp ctx bexp =
 
 let rec simplify_term ctx term =
   match term with
-  | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else [Nop]
-  | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
+  | If (bexp, ast1) -> if simplify_bexp ctx bexp then simplify_ast ctx ast1 else [Nop]
+  | While (cond, ast) -> if simplify_bexp ctx cond then [term] else [Nop]
+  | Elif (bexp, ast1, ast2) -> if simplify_bexp ctx bexp then simplify_ast ctx ast1 else simplify_ast ctx ast2
   | Def (str, aexp) -> [Def (str, ALit (`NUM (simplify_aexp ctx aexp)))]
-  | Print aexp -> [Print (ALit (`NUM (simplify_aexp ctx aexp)))] 
+  | Print aexp -> [Print (ALit (`NUM (simplify_aexp ctx aexp)))]
   | Nop -> [Nop]
 
 and simplify_ast ctx ast =
@@ -44,6 +45,7 @@ and simplify_ast ctx ast =
 let rec interp_term ctx term =
   match term with
   | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else ctx
+  | While (cond, ast) -> if (simplify_bexp ctx cond) then interp_term (interp_ast ctx ast) term else ctx
   | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else (interp_ast ctx ast2)
   | Print aexp -> ALit (`NUM (simplify_aexp ctx aexp)) |> faexp |> printf "%s\n"; ctx 
   | Nop -> ctx

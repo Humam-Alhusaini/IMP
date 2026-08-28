@@ -19,6 +19,7 @@ type token =
   | LBRACK
   | RBRACK
   | SEMICOLON
+  | WHILE
   | COLON
   | AND
   | OR
@@ -66,6 +67,7 @@ let string_to_tok str =
   | "elif" -> ELIF
   | "print" -> PRINT
   | "not" -> NOT
+  | "while" -> WHILE
   | _ -> LIT (`VAR str);;
 
 let shiftr pos : position =

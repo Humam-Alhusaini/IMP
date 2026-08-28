@@ -37,14 +37,12 @@ let rec fmap map =
   | Empty -> ""
   | Elem (key, aexp, map') -> sprintf "%s -> %s\n%s" key (faexp aexp) (fmap map');;
 
-let rec fdef (name, aexp) = 
-  sprintf "Def %s = %s;\n" name (faexp aexp)
-
 let rec fterm term = 
   match term with 
-  | Def d -> fdef d
+  | Def (name, aexp) -> (sprintf "Def %s = %s;\n" name (faexp aexp))
   | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n {\n %s }\n  else\n {\n %s }\n" (fbexp cond) (fast ast1) (fast ast2)
   | If (cond, ast) -> sprintf "If (%s) then\n {\n %s }\n" (fbexp cond) (fast ast)
+  | While (cond, ast) -> sprintf "While (%s) then\n {\n %s }\n" (fbexp cond) (fast ast)
   | Print aexp -> faexp aexp |> sprintf "Print (%s);\n"
   | Nop -> "Nop"
 
@@ -82,6 +80,7 @@ match tok with
 | THEN -> "THEN"
 | EOF -> "EOF"
 | DEF -> "DEF"
+| WHILE -> "WHILE"
 | PRINT -> "PRINT"
 | ELIF -> "ELIF";;
 

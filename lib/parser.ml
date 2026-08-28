@@ -27,6 +27,7 @@ and term =
 | Def of def
 | Elif of bexp * ast * ast
 | If of bexp * ast
+| While of bexp * ast
 | Print of aexp
 | Nop
 
@@ -105,6 +106,11 @@ and parse_elif ps =
   let (ps, term2) = parse_nested ps in
         let term = Elif (cond, term1, term2) in (ps, term)
 
+and parse_while ps =
+  let (ps, cond) = parse_bexp ps in 
+  let (ps, term) = parse_nested ps in
+  let term = While (cond, term) in (ps, term)
+
 and parse_print ps =
   let (ps, aexp) = parse_aexp ps in
   let term = Print aexp in (ps, term)
@@ -115,6 +121,7 @@ and parse_term ps =
   | (DEF, _) :: ls -> parse_def ls
   | (IF, _) :: ls -> parse_if ls
   | (ELIF, _) :: ls -> parse_elif ls
+  | (WHILE, _) :: ls -> parse_while ls
   | (PRINT, _) :: ls -> parse_print ls
   | hd :: _ -> Parsing_error ("Expected def, num, or control flow", hd) |> raise
   | [] -> Fatal "Nothing here! Contact maintainers!" |> raise in

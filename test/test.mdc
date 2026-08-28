@@ -9,5 +9,5 @@ if (not true) then
 { def y = 2; print x; print y; };
 
 
-if (not (true & false)) then 
-{ print (x+2); };
+while (false)
+{ def x = 1; print (x+2); };

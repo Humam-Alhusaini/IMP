@@ -18,6 +18,7 @@ type token =
   | LBRACK
   | RBRACK
   | SEMICOLON
+  | WHILE
   | COLON
   | AND
   | OR

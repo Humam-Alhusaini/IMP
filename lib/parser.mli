@@ -22,6 +22,7 @@ type term =
   | Def of def
   | Elif of bexp * ast * ast
   | If of bexp * ast
+  | While of bexp * ast
   | Print of aexp
   | Nop
 
