@@ -22,8 +22,7 @@ let rec faexp aexp =
 
 let rec fbexp bexp = 
   match bexp with 
-  | True -> "True"
-  | False -> "False"
+  | Bool b -> string_of_bool b
   | And (bexp1, bexp2) -> sprintf "%s && %s" (fbexp bexp1) (string_of_bool bexp2)
   | Or (bexp1, bexp2) -> sprintf "%s || %s" (fbexp bexp1) (string_of_bool bexp2)
   | Not bexp -> sprintf "not %s" (fbexp bexp)
@@ -57,8 +56,7 @@ and fast ast =
 let format_tok tok =
 match tok with
 | LIT lit -> "LIT"
-| TRUE -> "TRUE"
-| FALSE -> "FALSE"
+| BOOL b -> "BOOL"
 | MULT -> "MULT"
 | PLUS -> "PLUS"
 | SUB -> "SUB"

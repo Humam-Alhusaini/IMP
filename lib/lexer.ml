@@ -3,8 +3,7 @@ type literal = [`NUM of int | `VAR of string]
 
 type token = 
   | LIT of literal
-  | TRUE
-  | FALSE
+  | BOOL of bool
   | MULT
   | PLUS
   | SUB
@@ -61,8 +60,8 @@ let string_to_tok str =
   | "if" -> IF
   | "then" -> THEN
   | "else" -> ELSE
-  | "true" -> TRUE
-  | "false" -> FALSE
+  | "true" -> BOOL true
+  | "false" -> BOOL false
   | "def" -> DEF
   | "elif" -> ELIF
   | "print" -> PRINT

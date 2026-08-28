@@ -4,3 +4,6 @@ elif (false) then
 { print(x); }
 else 
 { print(5); };
+
+if true then 
+{ def y = 2; print y;};

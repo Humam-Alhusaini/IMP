@@ -19,8 +19,7 @@ and simplify_aexp ctx aexp =
 
 let rec simplify_bexp ctx bexp =
   match bexp with
-  | True -> true
-  | False -> false
+  | Bool b -> b
   | And (bexp1, bexp2) -> simplify_bexp ctx bexp1 && bexp2
   | Or (bexp1, bexp2) -> simplify_bexp ctx bexp1 || bexp2
   | Not bexp -> not (simplify_bexp ctx bexp)

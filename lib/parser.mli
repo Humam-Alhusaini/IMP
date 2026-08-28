@@ -7,8 +7,7 @@ type aexp =
   | Amult of aexp * literal
 
 type bexp =
-  | True
-  | False
+  | Bool of bool
   | And of bexp * bool
   | Or of bexp * bool
   | Not of bexp
