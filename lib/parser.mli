@@ -1,11 +1,10 @@
 open Lexer
 
 type aexp =
-  | Num of int
-  | Aplus of aexp * aexp
-  | Asub of aexp * aexp
-  | Amult of aexp * aexp
-  | Var of string
+  | ALit of literal
+  | Aplus of aexp * literal
+  | Asub of aexp * literal
+  | Amult of aexp * literal
 
 type bexp =
   | True
@@ -44,7 +43,6 @@ val error_of_token : string -> parseable_token -> string
 val create : toks -> toks
 val check_and_skip : toks -> token -> toks
 val parse_aexp : toks -> toks * aexp
-val parse_bool : parseable_token -> bexp
 val parse_bexp : toks -> toks * bexp
 val parse_nested : toks -> toks * ast
 val parse_def : toks -> toks * term

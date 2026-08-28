@@ -6,11 +6,10 @@ exception Parsing_error of string * parseable_token
 exception Fatal of string
 
 type aexp =
-| Num of int
-| Aplus of aexp * aexp
-| Asub of aexp * aexp
-| Amult of aexp * aexp
-| Var of string
+| ALit of literal
+| Aplus of aexp * literal
+| Asub of  aexp * literal
+| Amult of aexp * literal
 
 and bexp = 
   | True
@@ -47,30 +46,25 @@ let check_and_skip ps endtok =
                         Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
 
 let parse_aexp ps =
-
   let rec parse_binop ps curr =
     match ps with
-    | (MULT, p) :: (NUM y, _) :: ls -> parse_binop ls (Amult (curr, Num y))
-    | (PLUS, p) :: (NUM y, _) :: ls -> parse_binop ls (Aplus (curr, Num y))
-    | (SUB, p) :: (NUM y, _) :: ls -> parse_binop ls (Asub (curr, Num y))
-    | [] -> Fatal "Token ended before finding end token" |> raise
+    | (MULT, p) :: (LIT lit, _) :: ls -> parse_binop ls (Amult (curr, lit))
+    | (PLUS, p) :: (LIT lit, _) :: ls -> parse_binop ls (Aplus (curr, lit))
+    | (SUB, p) :: (LIT lit, _) :: ls -> parse_binop ls (Asub (curr, lit))
+    | [] -> Fatal "No EOF token?" |> raise
     | (RPAREN, _) :: ls -> (ls, curr)
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
-  let match_num n =
-    match n with
-    | (NUM y, _) -> Num y
-    | (VAR y, _) -> Var y
-    | _ -> Parsing_error ("Expected num", n) |> raise in
   match ps with
-  | (LPAREN, _) :: num :: ls -> parse_binop ls (match_num num)
+  | (LPAREN, _) :: (LIT lit, _) :: ls -> parse_binop ls (ALit lit)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
-
+(*
 let parse_bool (tok, pos) =
   match tok with
   | TRUE -> True
   | FALSE -> False
   | _ -> Parsing_error ("Expected bool", (tok, pos)) |> raise
+*)
 
 let parse_bexp ps =
   (*
@@ -82,7 +76,8 @@ let parse_bexp ps =
     | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
     *)
   match ps with
-  | (LPAREN, _) :: bool :: (RPAREN, _) :: ls  -> (ls, parse_bool bool)
+  | (LPAREN, _) :: (TRUE, _ ) :: (RPAREN, _) :: ls  -> (ls, True)
+  | (LPAREN, _) :: (FALSE, _ ) :: (RPAREN, _) :: ls  -> (ls, False)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
 
@@ -94,9 +89,9 @@ let rec parse_nested ps =
 
 and parse_def ps =
   match ps with
-  | (VAR str, _) :: (EQ, _) :: ls  -> let (ps, aexp) = parse_aexp ls in
+  | (LIT (`VAR str), _) :: (EQ, _) :: ls  -> let (ps, aexp) = parse_aexp ls in
                                                 let term = Def (str, aexp) in (ps, term)
-  | (VAR str, _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
+  | (LIT (`VAR str), _) :: tok :: _ -> Parsing_error ("Missing Equal Sign in Definition", tok) |> raise
   | tok :: _ -> Parsing_error ("Missing var", tok) |> raise
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 

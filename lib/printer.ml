@@ -4,16 +4,21 @@ open Parser
 open Lexer
 open Ctx
 
+let fliteral lit = 
+  match lit with
+  | `NUM n -> sprintf "%d" n
+  | `VAR str -> str;;
+
 let rec faexp aexp = 
   match aexp with 
-  | Num n -> sprintf "%d" n
+  | ALit (`NUM n) -> sprintf "%d" n
+  | ALit (`VAR str) -> str
   | Aplus (aexp1, aexp2) -> 
-      sprintf "(%s + %s)" (faexp aexp1) (faexp aexp2)
+      sprintf "(%s + %s)" (faexp aexp1) (fliteral aexp2)
   | Asub (aexp1, aexp2) -> 
-      sprintf "(%s - %s)" (faexp aexp1) (faexp aexp2)
+      sprintf "(%s - %s)" (faexp aexp1) (fliteral aexp2)
   | Amult (aexp1, aexp2) -> 
-      sprintf "(%s * %s)" (faexp aexp1) (faexp aexp2)
-  | Var str -> str
+      sprintf "(%s * %s)" (faexp aexp1) (fliteral aexp2)
 
 let rec fbexp bexp = 
   match bexp with 
@@ -51,8 +56,9 @@ and fast ast =
 
 let format_tok tok =
 match tok with
-| NUM i -> sprintf "NUM(%i)" i
-| VAR s -> sprintf "VAR(%s)" s
+| LIT lit -> "LIT"
+| TRUE -> "TRUE"
+| FALSE -> "FALSE"
 | MULT -> "MULT"
 | PLUS -> "PLUS"
 | SUB -> "SUB"
@@ -73,11 +79,8 @@ match tok with
 | OR -> "OR"
 | IF -> "IF"
 | ELSE -> "ELSE"
-| TRUE -> "TRUE"
-| FALSE -> "FALSE"
 | COMMA -> "COMMA"
 | PERIOD -> "PERIOD"
-| NAT -> "NAT"
 | THEN -> "THEN"
 | EOF -> "EOF"
 | DEF -> "DEF"

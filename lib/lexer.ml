@@ -1,7 +1,10 @@
 
+type literal = [`NUM of int | `VAR of string]
+
 type token = 
-  | NUM of int
-  | VAR of string
+  | LIT of literal
+  | TRUE
+  | FALSE
   | MULT
   | PLUS
   | SUB
@@ -24,9 +27,6 @@ type token =
   | PERIOD
   | IF
   | ELSE
-  | TRUE
-  | FALSE
-  | NAT
   | EOF
   | THEN
   | ELIF
@@ -63,12 +63,11 @@ let string_to_tok str =
   | "else" -> ELSE
   | "true" -> TRUE
   | "false" -> FALSE
-  | "nat" -> NAT
   | "def" -> DEF
   | "elif" -> ELIF
   | "print" -> PRINT
   | "not" -> NOT
-  | _ -> VAR str;;
+  | _ -> LIT (`VAR str);;
 
 let shiftr pos : position =
   { line_num = pos.line_num;
@@ -160,7 +159,7 @@ and tokenize_word lx pos =
 and tokenize_num lx pos =
   let chars = charify_num lx pos in
   let int = chars |> string_of_chars  |> int_of_string in
-    (NUM int, pos) :: (List.length chars |> shiftrn pos |> tokenize lx)
+    (LIT (`NUM int), pos) :: (List.length chars |> shiftrn pos |> tokenize lx)
 
 and skip_comment lx pos =
   if at_eof lx pos |> not then begin

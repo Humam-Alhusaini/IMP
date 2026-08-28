@@ -1,6 +1,9 @@
+type literal = [`NUM of int | `VAR of string ]
+
 type token =
-  | NUM of int
-  | VAR of string
+  | LIT of literal
+  | TRUE
+  | FALSE
   | MULT
   | PLUS
   | SUB
@@ -23,9 +26,6 @@ type token =
   | PERIOD
   | IF
   | ELSE
-  | TRUE
-  | FALSE
-  | NAT
   | EOF
   | THEN
   | ELIF

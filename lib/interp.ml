@@ -5,13 +5,17 @@ open Ctx
 
 open Printf
 
-let rec simplify_aexp ctx aexp =
+let rec int_of_lit ctx lit =
+  match lit with
+  | `NUM n -> n
+  | `VAR str -> simplify_aexp ctx (find str ctx)
+
+and simplify_aexp ctx aexp =
   match aexp with
-  | Aplus (aexp1, aexp2) -> simplify_aexp ctx aexp1 + simplify_aexp ctx aexp2
-  | Asub (aexp1, aexp2) -> simplify_aexp ctx aexp1 - simplify_aexp ctx aexp2
-  | Amult (aexp1, aexp2) -> simplify_aexp ctx aexp1 * simplify_aexp ctx aexp2
-  | Num y -> y
-  | Var str -> simplify_aexp ctx (find str ctx);;
+  | Aplus (aexp1, aexp2) -> simplify_aexp ctx aexp1 + (int_of_lit ctx aexp2)
+  | Asub (aexp1, aexp2) -> simplify_aexp ctx aexp1 - (int_of_lit ctx aexp2)
+  | Amult (aexp1, aexp2) -> simplify_aexp ctx aexp1 * (int_of_lit ctx aexp2)
+  | ALit lit -> int_of_lit ctx lit
 
 let rec simplify_bexp ctx bexp =
   match bexp with
@@ -29,8 +33,8 @@ let rec simplify_term ctx term =
   match term with
   | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else [Nop]
   | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (simplify_ast ctx ast1) else (simplify_ast ctx ast2)
-  | Def (str, aexp) -> [Def (str, Num (simplify_aexp ctx aexp))]
-  | Print aexp -> [Print (Num (simplify_aexp ctx aexp))] 
+  | Def (str, aexp) -> [Def (str, ALit (`NUM (simplify_aexp ctx aexp)))]
+  | Print aexp -> [Print (ALit (`NUM (simplify_aexp ctx aexp)))] 
   | Nop -> [Nop]
 
 and simplify_ast ctx ast =
@@ -42,9 +46,9 @@ let rec interp_term ctx term =
   match term with
   | If (bexp, ast1) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else ctx
   | Elif (bexp, ast1, ast2) -> if (simplify_bexp ctx bexp) then (interp_ast ctx ast1) else (interp_ast ctx ast2)
-  | Print aexp -> Num (simplify_aexp ctx aexp) |> faexp |> printf "%s\n"; ctx 
+  | Print aexp -> ALit (`NUM (simplify_aexp ctx aexp)) |> faexp |> printf "%s\n"; ctx 
   | Nop -> ctx
-  | Def (str, aexp) -> let newaexp = Num (simplify_aexp ctx aexp) in
+  | Def (str, aexp) -> let newaexp = ALit (`NUM (simplify_aexp ctx aexp)) in
                         add str newaexp ctx
 
 and interp_ast ctx ast =

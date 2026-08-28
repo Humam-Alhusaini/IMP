@@ -9,7 +9,7 @@ let rec repl ctx =
   match txt with
   | "exit" -> print_endline "Goodbye!"; ctx
   | "pctx" -> print_endline (fmap ctx); ctx
-  | _ -> read txt ctx false
+  | _ -> read txt ctx false |> repl
 
 let () = 
   if Array.length Sys.argv <> 1 then
