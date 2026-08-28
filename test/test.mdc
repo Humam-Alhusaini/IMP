@@ -5,5 +5,9 @@ elif (false | true) then
 else 
 { print 5; };
 
-if (true & true) then 
+if (not true) then 
 { def y = 2; print x; print y; };
+
+
+if (not (true & false)) then 
+{ print (x+2); };

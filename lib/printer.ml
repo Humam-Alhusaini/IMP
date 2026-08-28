@@ -25,11 +25,11 @@ let rec fbexp bexp =
   | Bool b -> string_of_bool b
   | And (bexp1, bexp2) -> sprintf "%s && %s" (fbexp bexp1) (string_of_bool bexp2)
   | Or (bexp1, bexp2) -> sprintf "%s || %s" (fbexp bexp1) (string_of_bool bexp2)
-  | Not bexp -> sprintf "not %s" (fbexp bexp)
+  | Not bexp -> sprintf "not (%s)" (fbexp bexp)
   | BEq (aexp1, aexp2) -> sprintf "%s = %s" (faexp aexp1) (faexp aexp2)
-  | BNeq (aexp1, aexp2) -> sprintf "%s ~ %s" (faexp aexp1) (faexp aexp2)
-  | BLe (aexp1, aexp2) -> sprintf "%s <> %s" (faexp aexp1) (faexp aexp2)
-  | BGt (aexp1, aexp2) -> sprintf "%s <> %s" (faexp aexp1) (faexp aexp2)
+  | BNeq (aexp1, aexp2) -> sprintf "%s <> %s" (faexp aexp1) (faexp aexp2)
+  | BLe (aexp1, aexp2) -> sprintf "%s <= %s" (faexp aexp1) (faexp aexp2)
+  | BGt (aexp1, aexp2) -> sprintf "%s < %s" (faexp aexp1) (faexp aexp2)
 ;;
 
 let rec fmap map =
@@ -38,19 +38,19 @@ let rec fmap map =
   | Elem (key, aexp, map') -> sprintf "%s -> %s\n%s" key (faexp aexp) (fmap map');;
 
 let rec fdef (name, aexp) = 
-  sprintf "Def %s = %s" name (faexp aexp)
+  sprintf "Def %s = %s;\n" name (faexp aexp)
 
 let rec fterm term = 
   match term with 
   | Def d -> fdef d
-  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n { %s }\n  else\n { %s }" (fbexp cond) (fast ast1) (fast ast2)
-  | If (cond, ast) -> sprintf "If (%s) then { %s }" (fbexp cond) (fast ast)
+  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n { %s }\n  else\n { %s };\n" (fbexp cond) (fast ast1) (fast ast2)
+  | If (cond, ast) -> sprintf "If (%s) then\n { %s };\n" (fbexp cond) (fast ast)
   | Print aexp -> faexp aexp |> sprintf "Print (%s)"
   | Nop -> "Nop"
 
 and fast ast = 
   match ast with
-  | hd :: ls -> sprintf "%s; %s" (fterm hd) (fast ls)
+  | hd :: ls -> sprintf "%s %s" (fterm hd) (fast ls)
   | [] -> ""
 
 let format_tok tok =

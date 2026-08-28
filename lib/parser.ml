@@ -71,8 +71,9 @@ let rec parse_bexp ps =
 
   match ps with
   | (LPAREN, _) :: (BOOL bye, _) :: ls -> Bool bye |> parse_binop ls 
-  | (LPAREN, _) :: (NOT, _) :: ls  -> let (toks, b) = parse_bexp ls in (toks, Not b)
   | (BOOL b, _) :: ls  -> (ls, Bool b)
+  | (LPAREN, _) :: (NOT, _) :: ls  -> 
+    let (toks, b) = parse_bexp ls in let toks = check_and_skip toks RPAREN in (toks, Not b)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("bexpession did not start with LPAREN", hd) |> raise;;
 
