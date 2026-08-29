@@ -58,20 +58,30 @@ let parse_aexp ps =
   | (LPAREN, _) :: (LIT lit, _) :: ls -> parse_binop ls (ALit lit)
   | (LIT lit, _) :: ls -> (ls, ALit lit)
   | [] -> Fatal "No tokens to parse" |> raise
-  | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN", hd) |> raise;;
+  | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN or lit", hd) |> raise;;
 
 let rec parse_bexp ps =
 
-  let rec parse_binop (ps : toks) (curr : bexp) : toks * bexp =
+  let rec parse_binop ps curr =
     match ps with
     | (AND, p) :: (BOOL b, _) :: ls -> parse_binop ls (And (curr, b))
     | (OR, p) :: (BOOL b, _) :: ls -> parse_binop ls (Or (curr, b))
     | (RPAREN, _) :: ls -> (ls, curr)
     | [] -> Fatal "Token ended before finding end token" |> raise
     | hd :: _ -> Parsing_error ("Expected bexpession to either end or continue", hd) |> raise in
+  
+  let rec parse_baexp ps curr =
+    let (ps, aexp1) = parse_aexp ps in
+    match ps with
+    | (EQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in let ps = check_and_skip ps RPAREN in (ps, BEq (aexp1, aexp2))
+    | (NEQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BNeq (aexp1, aexp2))
+    | (GT, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BGt (aexp1, aexp2))
+    | (LE, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BLe (aexp1, aexp2))
+    | _ -> Fatal "Your mom" |> raise in
 
   match ps with
   | (LPAREN, _) :: (BOOL bye, _) :: ls -> Bool bye |> parse_binop ls 
+  | (LPAREN, _) :: (LIT x, pos) :: ls -> ALit x |> parse_baexp ((LIT x, pos) :: ls) 
   | (BOOL b, _) :: ls  -> (ls, Bool b)
   | (LPAREN, _) :: (NOT, _) :: ls  -> 
     let (toks, b) = parse_bexp ls in let toks = check_and_skip toks RPAREN in (toks, Not b)
