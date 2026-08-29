@@ -52,11 +52,10 @@ let parse_aexp ps =
     | (PLUS, p) :: (LIT lit, _) :: ls -> parse_binop ls (Aplus (curr, lit))
     | (SUB, p) :: (LIT lit, _) :: ls -> parse_binop ls (Asub (curr, lit))
     | [] -> Fatal "No EOF token?" |> raise
-    | (RPAREN, _) :: ls -> (ls, curr)
-    | hd :: _ -> Parsing_error ("Expected aexpession to either end or continue", hd) |> raise in
+    | hd :: _ -> (ps, curr) in
   match ps with
-  | (LPAREN, _) :: (LIT lit, _) :: ls -> parse_binop ls (ALit lit)
-  | (LIT lit, _) :: ls -> (ls, ALit lit)
+  | (LPAREN, _) :: (LIT lit, _) :: ls -> let (toks, p) = parse_binop ls (ALit lit) in (check_and_skip toks RPAREN, p)
+  | (LIT lit, _) :: ls -> ALit lit |> parse_binop ls 
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("aexpession did not start with LPAREN or lit", hd) |> raise;;
 
@@ -73,16 +72,18 @@ let rec parse_bexp ps =
   let rec parse_baexp ps =
     let (ps, aexp1) = parse_aexp ps in
     match ps with
-    | (EQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in let ps = check_and_skip ps RPAREN in (ps, BEq (aexp1, aexp2))
-    | (NEQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BNeq (aexp1, aexp2))
+    | (EQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BEq (aexp1, aexp2))
+    (*| (NEQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BNeq (aexp1, aexp2))
     | (GT, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BGt (aexp1, aexp2))
-    | (LE, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BLe (aexp1, aexp2))
-    | _ -> Fatal "Your mom" |> raise in
+    | (LE, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BLe (aexp1, aexp2))*)
+    | hd :: _ -> Parsing_error ("no idea bro", hd) |> raise
+    | [] -> Fatal "no idea bro" |> raise in
 
   match ps with
   | (LPAREN, _) :: (BOOL bye, _) :: ls -> Bool bye |> parse_binop ls 
-  | (LPAREN, _) :: (LIT x, pos) :: ls -> parse_baexp ((LIT x, pos) :: ls) 
-  | (LPAREN, _) :: (LPAREN, pos) :: ls -> parse_baexp ((LPAREN, pos) :: ls) 
+  | (LPAREN, _) :: (LIT x, pos) :: ls -> 
+    let (toks, bexp) = parse_baexp ((LIT x, pos) :: ls) in (check_and_skip toks RPAREN, bexp)
+  (*| (LPAREN, _) :: (LPAREN, pos) :: ls -> parse_bexp ((LPAREN, pos) :: ls) *) 
   | (BOOL b, _) :: ls  -> (ls, Bool b)
   | (LPAREN, _) :: (NOT, _) :: ls  -> 
     let (toks, b) = parse_bexp ls in let toks = check_and_skip toks RPAREN in (toks, Not b)

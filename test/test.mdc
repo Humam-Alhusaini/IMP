@@ -1,4 +1,12 @@
-def x = 0;
+\
+def x = 0+1;
+
+print 1+1;
+\
+
+if (1 + 1 = (2+0)) then
+{ print 4; };
+
 \
 elif (not (1=1)) then 
 { def x = 0; print 4; }
@@ -12,5 +20,17 @@ while (false)
 { def x = 1; print (x+2); };
 \
 
+\
 if ((1+1) = (0+2)) then
 { print 4; };
+
+if ((1) = (2)) then
+{ print 4; };
+
+if (1 = 2) then
+{ print 4; };
+
+examples of parsable bexps
+
+(((1+1) = (1+1)) | true)
+\
