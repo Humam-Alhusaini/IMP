@@ -2,6 +2,39 @@
 open Lexer
 open Printf
 
+let format_tok tok =
+match tok with
+| LIT lit -> "LIT"
+| BOOL b -> "BOOL"
+| MULT -> "MULT"
+| PLUS -> "PLUS"
+| SUB -> "SUB"
+| EQ -> "EQ"
+| NEQ -> "NEQ"
+| NOT -> "NOT"
+| GT -> "GT"
+| LE -> "LE"
+| LPAREN -> "LPAREN"
+| RPAREN -> "RPAREN"
+| LBRACE -> "LBRACE"
+| RBRACE -> "RBRACE"
+| LBRACK -> "LBRACK"
+| RBRACK -> "RBRACK"
+| SEMICOLON -> "SEMICOLON"
+| COLON -> "COLON"
+| AND -> "AND"
+| OR -> "OR"
+| IF -> "IF"
+| ELSE -> "ELSE"
+| COMMA -> "COMMA"
+| PERIOD -> "PERIOD"
+| THEN -> "THEN"
+| EOF -> "EOF"
+| DEF -> "DEF"
+| WHILE -> "WHILE"
+| PRINT -> "PRINT"
+| ELIF -> "ELIF";;
+
 exception Parsing_error of string * parseable_token
 exception Fatal of string
 
@@ -43,7 +76,7 @@ let check_and_skip ps endtok =
   | (ftok, p) :: ls -> if endtok = ftok then
                        ls
                       else
-                        Parsing_error ("Expected token to end statement", (ftok, p)) |> raise;;
+                        Parsing_error (format_tok endtok |> sprintf "Expected %s to end statement", (ftok, p)) |> raise;;
 
 let parse_aexp ps =
   let rec parse_binop ps curr =
@@ -63,8 +96,8 @@ let rec parse_bexp ps =
 
   let rec parse_binop ps curr =
     match ps with
-    | (AND, p) :: (BOOL b, _) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
-    | (OR, p) :: (BOOL b, _) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
+    | (AND, p) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
+    | (OR, p) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
     | [] -> Fatal "Token ended before finding end token" |> raise
     | hd :: _ -> (ps, curr) in
   
@@ -79,11 +112,13 @@ let rec parse_bexp ps =
     | [] -> Fatal "no idea bro" |> raise in
 
   match ps with
-  | (LPAREN, _) :: (LIT x, pos) :: ls -> 
-    let (toks, bexp) = parse_baexp ((LIT x, pos) :: ls) in (check_and_skip toks RPAREN, bexp)
+  | (LPAREN, _) :: ls -> 
+    let (toks, bexp) = parse_baexp ls in (check_and_skip toks RPAREN, bexp)
+  | (LIT x, pos) :: ls -> 
+    let (toks, bexp) = parse_baexp ps in (toks, bexp)
   | (BOOL b, _) :: ls  -> Bool b |> parse_binop ls 
-  | (LPAREN, _) :: (NOT, _) :: ls  -> 
-    let (toks, b) = parse_bexp ls in (check_and_skip toks RPAREN, Not b)
+  | (NOT, _) :: ls  -> 
+    let (toks, b) = parse_bexp ls in (toks, Not b)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("bexpession did not start with LPAREN", hd) |> raise;;
 
@@ -102,7 +137,9 @@ and parse_def ps =
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
 and parse_if ps =
+  let ps = check_and_skip ps LPAREN in
   let (ps, cond) = parse_bexp ps in
+  let ps = check_and_skip ps RPAREN in
   let ps = check_and_skip ps THEN in
     let (ps, nested_term) = parse_nested ps in
       let term = If (cond, nested_term) in (ps, term)

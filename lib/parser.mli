@@ -1,5 +1,7 @@
 open Lexer
 
+val format_tok : Lexer.token -> string
+
 type aexp =
   | ALit of literal
   | Aplus of aexp * literal

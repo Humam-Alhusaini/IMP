@@ -51,39 +51,6 @@ and fast ast =
   | hd :: ls -> sprintf "%s %s" (fterm hd) (fast ls)
   | [] -> ""
 
-let format_tok tok =
-match tok with
-| LIT lit -> "LIT"
-| BOOL b -> "BOOL"
-| MULT -> "MULT"
-| PLUS -> "PLUS"
-| SUB -> "SUB"
-| EQ -> "EQ"
-| NEQ -> "NEQ"
-| NOT -> "NOT"
-| GT -> "GT"
-| LE -> "LE"
-| LPAREN -> "LPAREN"
-| RPAREN -> "RPAREN"
-| LBRACE -> "LBRACE"
-| RBRACE -> "RBRACE"
-| LBRACK -> "LBRACK"
-| RBRACK -> "RBRACK"
-| SEMICOLON -> "SEMICOLON"
-| COLON -> "COLON"
-| AND -> "AND"
-| OR -> "OR"
-| IF -> "IF"
-| ELSE -> "ELSE"
-| COMMA -> "COMMA"
-| PERIOD -> "PERIOD"
-| THEN -> "THEN"
-| EOF -> "EOF"
-| DEF -> "DEF"
-| WHILE -> "WHILE"
-| PRINT -> "PRINT"
-| ELIF -> "ELIF";;
-
 let rec toks_to_tokens toks =
 match toks with
 | [] -> []
