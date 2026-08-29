@@ -167,6 +167,7 @@ and skip_comment lx pos =
     let char = lx.[pos.offset] in
     match char with
     | '\\' -> shiftr pos |> tokenize lx
+    | '\n' -> new_line pos |> skip_comment lx
     | _ -> shiftr pos |> skip_comment lx
   end
 else Lexing_error ("Forgot to close comment", pos) |> raise

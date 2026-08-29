@@ -70,7 +70,7 @@ let rec parse_bexp ps =
     | [] -> Fatal "Token ended before finding end token" |> raise
     | hd :: _ -> Parsing_error ("Expected bexpession to either end or continue", hd) |> raise in
   
-  let rec parse_baexp ps curr =
+  let rec parse_baexp ps =
     let (ps, aexp1) = parse_aexp ps in
     match ps with
     | (EQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in let ps = check_and_skip ps RPAREN in (ps, BEq (aexp1, aexp2))
@@ -81,7 +81,8 @@ let rec parse_bexp ps =
 
   match ps with
   | (LPAREN, _) :: (BOOL bye, _) :: ls -> Bool bye |> parse_binop ls 
-  | (LPAREN, _) :: (LIT x, pos) :: ls -> ALit x |> parse_baexp ((LIT x, pos) :: ls) 
+  | (LPAREN, _) :: (LIT x, pos) :: ls -> parse_baexp ((LIT x, pos) :: ls) 
+  | (LPAREN, _) :: (LPAREN, pos) :: ls -> parse_baexp ((LPAREN, pos) :: ls) 
   | (BOOL b, _) :: ls  -> (ls, Bool b)
   | (LPAREN, _) :: (NOT, _) :: ls  -> 
     let (toks, b) = parse_bexp ls in let toks = check_and_skip toks RPAREN in (toks, Not b)
