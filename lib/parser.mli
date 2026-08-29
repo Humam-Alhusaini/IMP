@@ -8,8 +8,8 @@ type aexp =
 
 type bexp =
   | Bool of bool
-  | And of bexp * bool
-  | Or of bexp * bool
+  | And of bexp * bexp
+  | Or of bexp * bexp
   | Not of bexp
   | BEq of aexp * aexp
   | BNeq of aexp * aexp

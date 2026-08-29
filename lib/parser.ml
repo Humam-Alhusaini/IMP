@@ -13,8 +13,8 @@ type aexp =
 
 and bexp = 
   | Bool of bool
-  | And of bexp * bool 
-  | Or of bexp * bool
+  | And of bexp * bexp
+  | Or of bexp * bexp
   | Not of bexp
   | BEq of aexp * aexp
   | BNeq of aexp * aexp
@@ -63,11 +63,10 @@ let rec parse_bexp ps =
 
   let rec parse_binop ps curr =
     match ps with
-    | (AND, p) :: (BOOL b, _) :: ls -> parse_binop ls (And (curr, b))
-    | (OR, p) :: (BOOL b, _) :: ls -> parse_binop ls (Or (curr, b))
-    | (RPAREN, _) :: ls -> (ls, curr)
+    | (AND, p) :: (BOOL b, _) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
+    | (OR, p) :: (BOOL b, _) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
     | [] -> Fatal "Token ended before finding end token" |> raise
-    | hd :: _ -> Parsing_error ("Expected bexpession to either end or continue", hd) |> raise in
+    | hd :: _ -> (ps, curr) in
   
   let rec parse_baexp ps =
     let (ps, aexp1) = parse_aexp ps in
@@ -80,13 +79,11 @@ let rec parse_bexp ps =
     | [] -> Fatal "no idea bro" |> raise in
 
   match ps with
-  | (LPAREN, _) :: (BOOL bye, _) :: ls -> Bool bye |> parse_binop ls 
   | (LPAREN, _) :: (LIT x, pos) :: ls -> 
     let (toks, bexp) = parse_baexp ((LIT x, pos) :: ls) in (check_and_skip toks RPAREN, bexp)
-  (*| (LPAREN, _) :: (LPAREN, pos) :: ls -> parse_bexp ((LPAREN, pos) :: ls) *) 
-  | (BOOL b, _) :: ls  -> (ls, Bool b)
+  | (BOOL b, _) :: ls  -> Bool b |> parse_binop ls 
   | (LPAREN, _) :: (NOT, _) :: ls  -> 
-    let (toks, b) = parse_bexp ls in let toks = check_and_skip toks RPAREN in (toks, Not b)
+    let (toks, b) = parse_bexp ls in (check_and_skip toks RPAREN, Not b)
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("bexpession did not start with LPAREN", hd) |> raise;;
 

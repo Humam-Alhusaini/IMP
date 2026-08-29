@@ -23,8 +23,8 @@ let rec faexp aexp =
 let rec fbexp bexp = 
   match bexp with 
   | Bool b -> string_of_bool b
-  | And (bexp1, bexp2) -> sprintf "%s && %s" (fbexp bexp1) (string_of_bool bexp2)
-  | Or (bexp1, bexp2) -> sprintf "%s || %s" (fbexp bexp1) (string_of_bool bexp2)
+  | And (bexp1, bexp2) -> sprintf "%s && %s" (fbexp bexp1) (fbexp bexp2)
+  | Or (bexp1, bexp2) -> sprintf "%s || %s" (fbexp bexp1) (fbexp bexp2)
   | Not bexp -> sprintf "not (%s)" (fbexp bexp)
   | BEq (aexp1, aexp2) -> sprintf "%s = %s" (faexp aexp1) (faexp aexp2)
   | BNeq (aexp1, aexp2) -> sprintf "%s <> %s" (faexp aexp1) (faexp aexp2)

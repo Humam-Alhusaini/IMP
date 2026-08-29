@@ -20,8 +20,8 @@ and simplify_aexp ctx aexp =
 let rec simplify_bexp ctx bexp =
   match bexp with
   | Bool b -> b
-  | And (bexp1, bexp2) -> simplify_bexp ctx bexp1 && bexp2
-  | Or (bexp1, bexp2) -> simplify_bexp ctx bexp1 || bexp2
+  | And (bexp1, bexp2) -> simplify_bexp ctx bexp1 && simplify_bexp ctx bexp2
+  | Or (bexp1, bexp2) -> simplify_bexp ctx bexp1 || simplify_bexp ctx bexp2
   | Not bexp -> not (simplify_bexp ctx bexp)
   | BEq (aexp1, aexp2) -> simplify_aexp ctx aexp1 = simplify_aexp ctx aexp2
   | BNeq (aexp1, aexp2) -> simplify_aexp ctx aexp1 <> simplify_aexp ctx aexp2
