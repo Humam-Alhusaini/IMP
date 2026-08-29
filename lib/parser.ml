@@ -73,9 +73,9 @@ let rec parse_bexp ps =
     let (ps, aexp1) = parse_aexp ps in
     match ps with
     | (EQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BEq (aexp1, aexp2))
-    (*| (NEQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BNeq (aexp1, aexp2))
+    | (NEQ, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BNeq (aexp1, aexp2))
     | (GT, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BGt (aexp1, aexp2))
-    | (LE, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BLe (aexp1, aexp2))*)
+    | (LE, _) :: ps -> let (ps, aexp2) = parse_aexp ps in (ps, BLe (aexp1, aexp2))
     | hd :: _ -> Parsing_error ("no idea bro", hd) |> raise
     | [] -> Fatal "no idea bro" |> raise in
 
