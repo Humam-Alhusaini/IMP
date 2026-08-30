@@ -1,4 +1,4 @@
-type literal = [`NUM of int | `VAR of string ]
+type literal = [ `NUM of int | `VAR of string ]
 
 type token =
   | LIT of literal
@@ -34,11 +34,7 @@ type token =
   | PRINT
   | DO
 
-type position = {
-  line_num : int;
-  bol_off : int;
-  offset : int;
-}
+type position = { line_num : int; bol_off : int; offset : int }
 
 val start_pos : position
 
@@ -47,5 +43,4 @@ type parseable_token = token * position
 exception Lexing_error of string * position
 
 val parse_char : char -> position -> parseable_token
-
 val tokenize : string -> position -> parseable_token list

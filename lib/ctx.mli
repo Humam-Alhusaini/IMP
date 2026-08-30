@@ -1,8 +1,6 @@
 open Parser
 
-type aexp_map =
-  | Empty
-  | Elem of string * aexp * aexp_map
+type aexp_map = Empty | Elem of string * aexp * aexp_map
 
 exception Map_error of string
 
