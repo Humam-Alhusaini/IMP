@@ -1,4 +1,4 @@
-# Lang
+# IMP
 
 A minimal interpreter for [Software Foundation's IMP language](https://softwarefoundations.cis.upenn.edu/plf-current/Imp.html),
 written in OCaml.
