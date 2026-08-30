@@ -104,10 +104,10 @@ let parse toks debug =
       Printexc.to_string err |> printf "CONTACT MAINTAINERS: %s\n";
       []
 
-let read str ctx debug =
+let read str ctx ?(debug_tokens = false) ?(debug_ast = false) () =
   try
-    let tokens = lex str false in
-    let ast = parse tokens debug in
+    let tokens = lex str debug_tokens in
+    let ast = parse tokens debug_ast in
     interp_ast ctx ast
   with
   | Map_error err ->

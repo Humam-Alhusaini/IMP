@@ -9,4 +9,5 @@ val interp_term : aexp_map -> term -> aexp_map
 val interp_ast : aexp_map -> ast -> aexp_map
 val lex : string -> bool -> Lexer.parseable_token list
 val parse : Lexer.parseable_token list -> bool -> ast
-val read : string -> aexp_map -> bool -> aexp_map
+val read :
+  string -> aexp_map -> ?debug_tokens:bool -> ?debug_ast:bool -> unit -> aexp_map
