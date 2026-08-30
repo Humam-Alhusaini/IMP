@@ -1,6 +1,6 @@
 \ ============ IMP ============ \
-\ A guided tour of the language.            \
-\ Any text between two backslash markers is ignored.\
+\ A guided tour of the language.            
+ Any text between two backslash markers is ignored.\
 
 \ --- 1. Variables with def --- \
 def x = 10;
