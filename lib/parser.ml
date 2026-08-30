@@ -198,12 +198,17 @@ and parse_term ps =
     | (IF, _) :: ls -> parse_if ls
     | (ELIF, _) :: ls -> parse_elif ls
     | (WHILE, _) :: ls -> parse_while ls
-    | (DEF, _) :: ls -> let (toks, term) = parse_def ls in (check_and_skip toks SEMICOLON, term)
-    | (PRINT, _) :: ls -> let (toks, term) = parse_print ls in (check_and_skip toks SEMICOLON, term)
+    | (DEF, _) :: ls ->
+        let toks, term = parse_def ls in
+        (check_and_skip toks SEMICOLON, term)
+    | (PRINT, _) :: ls ->
+        let toks, term = parse_print ls in
+        (check_and_skip toks SEMICOLON, term)
     | hd :: _ ->
         Parsing_error ("Expected def, num, or control flow", hd) |> raise
     | [] -> Fatal "Nothing here! Contact maintainers!" |> raise
-  in (ps, term)
+  in
+  (ps, term)
 
 and parse ps ast endtok =
   let toks, term = parse_term ps in

@@ -72,11 +72,10 @@ and interp_ast ctx ast =
 let lex str debug =
   try
     let tokens = Lexer.tokenize str Lexer.start_pos in
-    if debug then (
-      let token_values, _ = List.split tokens in
-      print_tokens token_values
-    );
-  tokens
+    (if debug then
+       let token_values, _ = List.split tokens in
+       print_tokens token_values);
+    tokens
   with
   | Lexing_error (err, pos) ->
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num

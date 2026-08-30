@@ -37,7 +37,7 @@ let rec fterm term scope =
   | Def (name, aexp) -> sprintf "def %s = %s" name (faexp aexp)
   | Elif (cond, ast1, ast2) ->
       sprintf "if (%s) then\n%s%selse\n%send" (fbexp cond)
-        (fast ast1 (scope + 1)) 
+        (fast ast1 (scope + 1))
         (repeat "\t" scope)
         (fast ast2 (scope + 1))
   | If (cond, ast) ->
