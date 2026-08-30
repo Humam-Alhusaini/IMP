@@ -7,6 +7,6 @@ val simplify_term : aexp_map -> term -> ast
 val simplify_ast : aexp_map -> ast -> ast
 val interp_term : aexp_map -> term -> aexp_map
 val interp_ast : aexp_map -> ast -> aexp_map
-val lex : string -> Lexer.parseable_token list
+val lex : string -> bool -> Lexer.parseable_token list
 val parse : Lexer.parseable_token list -> bool -> ast
 val read : string -> aexp_map -> bool -> aexp_map

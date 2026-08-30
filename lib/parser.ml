@@ -94,10 +94,10 @@ let parse_aexp ps =
 
 let rec parse_bexp ps =
 
-  let rec parse_binop ps curr =
+  let rec parse_binop (ps, curr) =
     match ps with
     | (AND, p) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
-    | (OR, p) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, Or (curr, bexp))
+    | (OR, p) :: ls -> let (toks, bexp) = parse_bexp ls in (toks, And (curr, bexp))
     | [] -> Fatal "Token ended before finding end token" |> raise
     | hd :: _ -> (ps, curr) in
   
@@ -112,11 +112,8 @@ let rec parse_bexp ps =
     | [] -> Fatal "no idea bro" |> raise in
 
   match ps with
-  | (LPAREN, _) :: ls -> 
-    let (toks, bexp) = parse_baexp ls in (check_and_skip toks RPAREN, bexp)
-  | (LIT x, pos) :: ls -> 
-    let (toks, bexp) = parse_baexp ps in (toks, bexp)
-  | (BOOL b, _) :: ls  -> Bool b |> parse_binop ls 
+  | (LIT x, pos) :: ls -> parse_baexp ps |> parse_binop
+  | (BOOL b, _) :: ls  -> (ls, Bool b) |> parse_binop 
   | (NOT, _) :: ls  -> 
     let (toks, b) = parse_bexp ls in (toks, Not b)
   | [] -> Fatal "No tokens to parse" |> raise

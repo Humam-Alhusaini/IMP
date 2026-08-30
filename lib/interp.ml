@@ -58,9 +58,12 @@ and interp_ast ctx ast =
   | hd :: ls -> let newctx = interp_term ctx hd in
                 interp_ast newctx ls;;
 
-let lex str =
+let lex str debug =
   try 
-  let tokens = Lexer.start_pos |> Lexer.tokenize str in tokens
+  let tokens = Lexer.start_pos |> Lexer.tokenize str in
+    if debug then
+      print_ptokens tokens;
+      tokens
   with 
   | Lexing_error (err, pos) -> 
       printf "LEXING ERROR at line %d, offset %d: %s\n\n\n" pos.line_num pos.bol_off err;
@@ -83,7 +86,7 @@ let parse toks debug =
 
 let read str ctx debug =
   try
-    let tokens = lex str in
+    let tokens = lex str false in
     let ast = parse tokens debug in
     interp_ast ctx ast
   with 
