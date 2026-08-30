@@ -31,7 +31,9 @@ type token =
   | THEN
   | ELIF
   | DEF
+  | END
   | PRINT
+  | DO
 
 type position = {
   line_num : int;
@@ -68,6 +70,8 @@ let string_to_tok str =
   | "print" -> PRINT
   | "not" -> NOT
   | "while" -> WHILE
+  | "end" -> END
+  | "do" -> DO
   | _ -> LIT (`VAR str);;
 
 let shiftr pos : position =

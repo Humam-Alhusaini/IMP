@@ -36,20 +36,24 @@ let rec fmap map =
   match map with 
   | Empty -> ""
   | Elem (key, aexp, map') -> sprintf "%s -> %s\n%s" key (faexp aexp) (fmap map');;
+let repeat s n =
+  String.concat "" (List.init n (fun _ -> s))
 
-let rec fterm term = 
+let rec fterm term scope = 
   match term with 
-  | Def (name, aexp) -> (sprintf "Def %s = %s;\n" name (faexp aexp))
-  | Elif (cond, ast1, ast2) -> sprintf "If (%s) then\n {\n %s }\n  else\n {\n %s }\n" (fbexp cond) (fast ast1) (fast ast2)
-  | If (cond, ast) -> sprintf "If (%s) then\n {\n %s }\n" (fbexp cond) (fast ast)
-  | While (cond, ast) -> sprintf "While (%s) then\n {\n %s }\n" (fbexp cond) (fast ast)
-  | Print aexp -> faexp aexp |> sprintf "Print (%s);\n"
+  | Def (name, aexp) -> (sprintf "def %s = %s;" name (faexp aexp))
+  | Elif (cond, ast1, ast2) -> sprintf "if (%s) then\n%selse\n%send" (fbexp cond) (fast ast1 (scope+1)) (fast ast2 (scope+1))
+  | If (cond, ast) -> sprintf "if (%s) then\n %send" (fbexp cond) (fast ast (scope+1))
+  | While (cond, ast) -> sprintf "while (%s) do\n %send" (fbexp cond) (fast ast (scope+1))
+  | Print aexp -> faexp aexp |> sprintf "print (%s);"
   | Nop -> "Nop"
 
-and fast ast = 
+and fast ast scope = 
   match ast with
-  | hd :: ls -> sprintf "%s %s" (fterm hd) (fast ls)
   | [] -> ""
+  | hd :: ls ->
+    let tabs = repeat "\t" scope in  
+    sprintf "%s%s\n%s" tabs (fterm hd scope) (fast ls scope)
 
 let rec toks_to_tokens toks =
 match toks with

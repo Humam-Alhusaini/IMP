@@ -1,18 +1,14 @@
-\
-print 1+1;
-
-if (true & 1+1 = 2 & false) then
-{ print 4; };
-
-if (not 3-1=2 | true) then {print 3; };
-
-if (true & not true) then {print 3; };
-
-while (false)
-{ def x = 1; print (x+2); };
-\
+if (1=1) then
+ print 5; 
+ end;
 
 def x = 0;
 
-while (x <= 5)
-{ def x = x+1; print x; };
+while (x <= 5) do
+ def x = x+1; print x; 
+ elif (x=1) then
+    print 67;
+ else 
+    print 66;
+ end;
+end;

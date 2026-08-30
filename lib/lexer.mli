@@ -30,7 +30,9 @@ type token =
   | THEN
   | ELIF
   | DEF
+  | END
   | PRINT
+  | DO
 
 type position = {
   line_num : int;

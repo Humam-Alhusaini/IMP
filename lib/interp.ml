@@ -76,7 +76,7 @@ let parse toks debug =
   try 
     let (_,ast) = Parser.parse (Parser.create toks) [] EOF in
     if debug then
-      fast ast |> printf "%s\n";
+      fast ast 0 |> printf "%s\n";
     ast
   with 
   | Fatal err -> printf "\n"; printf "CONTACT MAINTAINERS: %s\n" err; []

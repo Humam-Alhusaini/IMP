@@ -33,6 +33,8 @@ match tok with
 | DEF -> "DEF"
 | WHILE -> "WHILE"
 | PRINT -> "PRINT"
+| END -> "END"
+| DO -> "DO"
 | ELIF -> "ELIF";;
 
 exception Parsing_error of string * parseable_token
@@ -141,20 +143,20 @@ and parse_def ps =
 and parse_if ps =
   let (ps, cond) = parse_cond ps in
   let ps = check_and_skip ps THEN in
-    let (ps, nested_term) = parse_nested ps in
-      let term = If (cond, nested_term) in (ps, term)
+  let (ps, nested_term) = parse ps [] END in
+  let term = If (cond, nested_term) in (ps, term)
 
 and parse_elif ps =
   let (ps, cond) = parse_cond ps in
   let ps = check_and_skip ps THEN in
-  let (ps, term1) = parse_nested ps in
-    let ps = check_and_skip ps ELSE in
-  let (ps, term2) = parse_nested ps in
-        let term = Elif (cond, term1, term2) in (ps, term)
+  let (ps, term1) = parse ps [] ELSE in
+  let (ps, term2) = parse ps [] END in
+  let term = Elif (cond, term1, term2) in (ps, term)
 
 and parse_while ps =
   let (ps, cond) = parse_cond ps in
-  let (ps, term) = parse_nested ps in
+  let ps = check_and_skip ps DO in
+  let (ps, term) = parse ps [] END in
   let term = While (cond, term) in (ps, term)
 
 and parse_print ps =
