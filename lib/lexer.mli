@@ -42,5 +42,4 @@ type parseable_token = token * position
 
 exception Lexing_error of string * position
 
-val parse_char : char -> position -> parseable_token
 val tokenize : string -> position -> parseable_token list
