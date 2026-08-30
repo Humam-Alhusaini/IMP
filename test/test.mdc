@@ -1,5 +1,4 @@
-def x = 0+1;
-
+\
 print 1+1;
 
 if (true & 1+1 = 2 & false) then
@@ -11,3 +10,9 @@ if (true & not true) then {print 3; };
 
 while (false)
 { def x = 1; print (x+2); };
+\
+
+def x = 0;
+
+while (x <= 5)
+{ def x = x+1; print x; };
