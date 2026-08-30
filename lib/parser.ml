@@ -119,6 +119,11 @@ let rec parse_bexp ps =
   | [] -> Fatal "No tokens to parse" |> raise
   | hd :: _ -> Parsing_error ("bexpession did not start with LPAREN", hd) |> raise;;
 
+let parse_cond ps = 
+  let ps = check_and_skip ps LPAREN in
+  let (ps, cond) = parse_bexp ps in
+  let ps = check_and_skip ps RPAREN in (ps, cond);;
+
 let rec parse_nested ps =
   match ps with
   | (LBRACE, _) :: ls -> parse ls [] RBRACE
@@ -134,15 +139,13 @@ and parse_def ps =
   | _ -> Fatal "Major issue in parsing definitions" |> raise
 
 and parse_if ps =
-  let ps = check_and_skip ps LPAREN in
-  let (ps, cond) = parse_bexp ps in
-  let ps = check_and_skip ps RPAREN in
+  let (ps, cond) = parse_cond ps in
   let ps = check_and_skip ps THEN in
     let (ps, nested_term) = parse_nested ps in
       let term = If (cond, nested_term) in (ps, term)
 
 and parse_elif ps =
-  let (ps, cond) = parse_bexp ps in 
+  let (ps, cond) = parse_cond ps in
   let ps = check_and_skip ps THEN in
   let (ps, term1) = parse_nested ps in
     let ps = check_and_skip ps ELSE in
@@ -150,7 +153,7 @@ and parse_elif ps =
         let term = Elif (cond, term1, term2) in (ps, term)
 
 and parse_while ps =
-  let (ps, cond) = parse_bexp ps in 
+  let (ps, cond) = parse_cond ps in
   let (ps, term) = parse_nested ps in
   let term = While (cond, term) in (ps, term)
 
