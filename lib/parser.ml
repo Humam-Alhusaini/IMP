@@ -195,19 +195,15 @@ and parse_print ps =
 and parse_term ps =
   let ps, term =
     match ps with
-    | (DEF, _) :: ls -> parse_def ls
     | (IF, _) :: ls -> parse_if ls
     | (ELIF, _) :: ls -> parse_elif ls
     | (WHILE, _) :: ls -> parse_while ls
-    | (PRINT, _) :: ls -> parse_print ls
+    | (DEF, _) :: ls -> let (toks, term) = parse_def ls in (check_and_skip toks SEMICOLON, term)
+    | (PRINT, _) :: ls -> let (toks, term) = parse_print ls in (check_and_skip toks SEMICOLON, term)
     | hd :: _ ->
         Parsing_error ("Expected def, num, or control flow", hd) |> raise
     | [] -> Fatal "Nothing here! Contact maintainers!" |> raise
-  in
-  match ps with
-  | (SEMICOLON, _) :: ls -> (ls, term)
-  | hd :: ls -> Parsing_error ("Expected Semicolon", hd) |> raise
-  | [] -> Fatal "No tokens to parse" |> raise
+  in (ps, term)
 
 and parse ps ast endtok =
   let toks, term = parse_term ps in

@@ -34,16 +34,17 @@ let repeat s n = String.concat "" (List.init n (fun _ -> s))
 
 let rec fterm term scope =
   match term with
-  | Def (name, aexp) -> sprintf "def %s = %s;" name (faexp aexp)
+  | Def (name, aexp) -> sprintf "def %s = %s" name (faexp aexp)
   | Elif (cond, ast1, ast2) ->
-      sprintf "if (%s) then\n%selse\n%send" (fbexp cond)
-        (fast ast1 (scope + 1))
+      sprintf "if (%s) then\n%s%selse\n%send" (fbexp cond)
+        (fast ast1 (scope + 1)) 
+        (repeat "\t" scope)
         (fast ast2 (scope + 1))
   | If (cond, ast) ->
       sprintf "if (%s) then\n %send" (fbexp cond) (fast ast (scope + 1))
   | While (cond, ast) ->
       sprintf "while (%s) do\n %send" (fbexp cond) (fast ast (scope + 1))
-  | Print aexp -> faexp aexp |> sprintf "print (%s);"
+  | Print aexp -> faexp aexp |> sprintf "print (%s)"
   | Nop -> "Nop"
 
 and fast ast scope =
