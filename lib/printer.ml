@@ -61,7 +61,7 @@ let rec print_tokens toks =
   match toks with
   | [] -> ()
   | hd :: tl ->
-      format_tok hd |> printf "%s\n";
+      format_tok hd |> printf "%s\t";
       print_tokens tl
 
 let format_pos pos = sprintf "line %d, offset %d" pos.line_num pos.bol_off

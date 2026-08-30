@@ -14,8 +14,22 @@ let rec repl ctx debug_tokens debug_ast =
       print_endline (fmap ctx);
       ctx
   | _ ->
-      let newctx = read txt ctx ~debug_tokens ~debug_ast () in
-      repl newctx debug_tokens debug_ast
+      if debug_tokens || debug_ast then begin
+        let tokens = lex txt debug_tokens in
+        if debug_ast then parse tokens true |> ignore;
+        ctx
+      end
+      else
+        let newctx = read txt ctx () in
+        repl newctx debug_tokens debug_ast
+
+let run_file file debug_tokens debug_ast =
+  let str = open_bin file |> input_all in
+  if debug_tokens || debug_ast then begin
+    let tokens = lex str debug_tokens in
+    if debug_ast then parse tokens true |> ignore
+  end
+  else read str Empty () |> ignore
 
 let () =
   let debug_tokens = ref false in
@@ -33,7 +47,4 @@ let () =
   | [] ->
       let _ = repl Empty !debug_tokens !debug_ast in
       ()
-  | file :: _ ->
-      let str = open_bin file |> input_all in
-      let _ = read str Empty ~debug_tokens:!debug_tokens ~debug_ast:!debug_ast () in
-      ()
+  | file :: _ -> run_file file !debug_tokens !debug_ast
