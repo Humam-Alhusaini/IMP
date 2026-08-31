@@ -6,16 +6,22 @@
 def x = 10;
 print 100;   \ x is now 10 \
 
+\ Make assertion here (x > 9) \
+
 \ --- 2. Arithmetic: +, -, * --- \
 def y = x * 2;
 def z = y - 5;
 print y;     \ 20 \
 print z;     \ 15 \
 
+\ Make assertion here (y > x and z < y) \
+
 \ --- 3. if with no else --- \
 if (y = 20) then
    print 102;
 end
+
+\ Make assertion here \
 
 \ --- 4. if / else via elif --- \
 elif (z > 100) then
@@ -24,6 +30,8 @@ else
    print 104;
 end
 
+\ Make assertion here \
+
 \ --- 5. Boolean and / or: & and | --- \
 elif (x > 5 & y <= 20) then
    print 105;
@@ -31,10 +39,14 @@ else
    print 106;
 end
 
+\ Make assertion here \
+
 \ --- 6. Boolean not --- \
 if (not true) then
    print 107;
 end
+
+\ Make assertion here \
 
 \ --- 7. while loop with a counter --- \
 def n = 0;
@@ -42,6 +54,8 @@ while (n <= 3) do
    def n = n + 1;
    print n;
 end
+
+\ Make assertion here \
 
 \ --- done --- \
 print 999;
