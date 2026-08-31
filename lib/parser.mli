@@ -18,10 +18,8 @@ type bexp =
   | BLe of aexp * aexp
   | BGt of aexp * aexp
 
-type def = string * aexp
-
 type term =
-  | Def of def
+  | Def of string * aexp
   | Elif of bexp * ast * ast
   | If of bexp * ast
   | While of bexp * ast

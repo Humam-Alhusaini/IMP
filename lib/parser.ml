@@ -39,12 +39,29 @@ let format_tok tok =
 exception Parsing_error of string * parseable_token
 exception Fatal of string
 
+(*
+aeval (ALit [Var x]) => (find ctx x)
+aeval (ALit [Num y]) => y
+aeval (APlus x y) => aeval x + aeval y
+aeval (Asub x y) => aeval x - aeval y
+aeval (Amult x y) => aeval x * aeval y
+*)
 type aexp =
   | ALit of literal
   | Aplus of aexp * literal
   | Asub of aexp * literal
   | Amult of aexp * literal
 
+(*
+bexp (Bool b) => b
+bexp (And b1 b2) => bexp b1 && bexp b2
+bexp (Or b1 b2) => bexp b1 || bexp b2
+bexp (Not b) => Not b
+bexp (Eq a1 a2) => a1 =? a2
+bexp (Neq a1 a2) => a1 <> a2
+bexp (Le a1 a2) => a1 <= a2
+bexp (Gt a1 a2) => a1 > a2
+*)
 and bexp =
   | Bool of bool
   | And of bexp * bexp
@@ -55,10 +72,14 @@ and bexp =
   | BLe of aexp * aexp
   | BGt of aexp * aexp
 
-and def = string * aexp
-
+(*
+ceval (def str a) => (str = aeval a)
+ceval (Elif b c1 c2) => (if b then c1 else c2)
+ceval (If b c) => (if b then c else skip)
+ceval (While b c) => (if b then c1 else skip)
+*)
 and term =
-  | Def of def
+  | Def of string * aexp
   | Elif of bexp * ast * ast
   | If of bexp * ast
   | While of bexp * ast
