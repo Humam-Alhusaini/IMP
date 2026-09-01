@@ -11,15 +11,16 @@
 
 (declare-const x Int)
 
-(assert (= x -10))            ; def x = 10
+(assert (= x -10))
 
 (declare-const y Int)
-;(assert (= y (abs x)))
+; (assert (= y (abs x)))
 
 (assert (= y (ite (>= x 0)
        x
        (- x))))
 
-(assert (not (> y x)))
+(assert (not (> y x))) ; produces unsat
+;(assert (> y x)) ; produces sat, so I can get model
 
 (check-sat)
